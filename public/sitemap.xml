@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://dawson-chen.github.io/</loc>
+    <lastmod>2024-03-25T23:40:02+08:00</lastmod>
+  </url><url>
+    <loc>https://dawson-chen.github.io/posts/megatron-lm-moe/</loc>
+    <lastmod>2024-03-25T23:40:02+08:00</lastmod>
+  </url><url>
+    <loc>https://dawson-chen.github.io/posts/</loc>
+    <lastmod>2024-03-25T23:40:02+08:00</lastmod>
+  </url><url>
+    <loc>https://dawson-chen.github.io/posts/megatron-lm-pipline/</loc>
+    <lastmod>2024-03-25T23:34:01+08:00</lastmod>
+  </url><url>
+    <loc>https://dawson-chen.github.io/categories/</loc>
+  </url><url>
+    <loc>https://dawson-chen.github.io/tags/</loc>
+  </url>
+</urlset>
