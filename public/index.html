@@ -7,19 +7,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
 <title>DawsonChen&#39;s Blog</title>
-<meta name="keywords" content="Blog, Portfolio, PaperMod">
-<meta name="description" content="ExampleSite description">
-<meta name="author" content="Me">
+
+<meta name="description" content="">
+<meta name="author" content="">
 <link rel="canonical" href="https://dawson-chen.github.io/">
 <meta name="google-site-verification" content="XYZabc">
 <meta name="yandex-verification" content="XYZabc">
 <meta name="msvalidate.01" content="XYZabc">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
-<link rel="icon" href="https://dawson-chen.github.io/%3Clink%20/%20abs%20url%3E">
-<link rel="icon" type="image/png" sizes="16x16" href="https://dawson-chen.github.io/%3Clink%20/%20abs%20url%3E">
-<link rel="icon" type="image/png" sizes="32x32" href="https://dawson-chen.github.io/%3Clink%20/%20abs%20url%3E">
-<link rel="apple-touch-icon" href="https://dawson-chen.github.io/%3Clink%20/%20abs%20url%3E">
-<link rel="mask-icon" href="https://dawson-chen.github.io/%3Clink%20/%20abs%20url%3E">
+<link rel="icon" href="https://dawson-chen.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://dawson-chen.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://dawson-chen.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://dawson-chen.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://dawson-chen.github.io/safari-pinned-tab.svg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
 <link rel="alternate" type="application/rss+xml" href="https://dawson-chen.github.io/index.xml">
@@ -61,16 +61,13 @@
 
     </style>
 </noscript><meta property="og:title" content="DawsonChen&#39;s Blog" />
-<meta property="og:description" content="ExampleSite description" />
+<meta property="og:description" content="" />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://dawson-chen.github.io/" />
-<meta property="og:image" content="https://dawson-chen.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E" />
-<meta property="og:site_name" content="ExampleSite" />
 
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:image" content="https://dawson-chen.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E" />
+<meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="DawsonChen&#39;s Blog"/>
-<meta name="twitter:description" content="ExampleSite description"/>
+<meta name="twitter:description" content=""/>
 
 <script type="application/ld+json">
 {
@@ -78,8 +75,8 @@
   "@type": "Organization",
   "name": "DawsonChen's Blog",
   "url": "https://dawson-chen.github.io/",
-  "description": "ExampleSite description",
-  "thumbnailUrl": "https://dawson-chen.github.io/%3Clink%20/%20abs%20url%3E",
+  "description": "",
+  "thumbnailUrl": "https://dawson-chen.github.io/favicon.ico",
   "sameAs": [
       "https://twitter.com/AllenCh52379145", "https://github.com/dawson-chen/dawson-chen.github.io"
   ]
@@ -102,9 +99,7 @@
 <header class="header">
     <nav class="nav">
         <div class="logo">
-            <a href="https://dawson-chen.github.io/" accesskey="h" title="Home (Alt + H)">
-                <img src="https://dawson-chen.github.io/apple-touch-icon.png" alt="" aria-label="logo"
-                    height="35">Home</a>
+            <a href="https://dawson-chen.github.io/" accesskey="h" title="DawsonChen&#39;s Blog (Alt + H)">DawsonChen&#39;s Blog</a>
             <div class="logo-switches">
                 <button id="theme-toggle" accesskey="t" title="(Alt + T)">
                     <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
@@ -176,7 +171,7 @@
 MoE结构回顾 首先，看一下在最主流的transformer框架里，MoE的结构如下图所示：
 %%{ init: { &#39;flowchart&#39;: { &#39;curve&#39;: &#39;bumpX&#39; } } }%% graph LR x[&#34;X(n-1)&#34;] --&gt; p1[&#34;.&#34;] --&gt; input_ln[&#34;Layer Norm&#34;] input_ln --&gt; attn[&#34;Self Attention&#34;] attn --&gt; plus1((&#43;)) p1 --&gt; plus1 plus1 --&gt; p2[&#34;.&#34;] --&gt; attn_ln[&#34;Layer Norm&#34;] subgraph MoE Layer expert1[&#34;Expert 1&#34;] expert2[&#34;Expert 2&#34;] expert_dot[&#34;...&#34;] expertk[&#34;Expert K&#34;] end attn_ln -.-&gt; expert2[&#34;Expert 2&#34;] attn_ln --&gt; expert1[&#34;Expert 1&#34;] attn_ln -....</p>
   </div>
-  <footer class="entry-footer"><span title='2024-03-25 23:40:02 +0800 CST'>March 25, 2024</span>&nbsp;·&nbsp;5 min&nbsp;·&nbsp;894 words&nbsp;·&nbsp;Me</footer>
+  <footer class="entry-footer"><span title='2024-03-25 23:40:02 +0800 CST'>March 25, 2024</span></footer>
   <a class="entry-link" aria-label="post link to Megatron Lm Moe" href="https://dawson-chen.github.io/posts/megatron-lm-moe/"></a>
 </article>
 
@@ -211,7 +206,7 @@ Interleaved 1F1B 我们在与传统流水线的类比中解释过，流水线切
 等待上一个节点的执行结果； 执行当前节点的操作； 将结果传给下一个节点； PP实现的时候，因为每个节点对应了前向后向2条流水线，所以需要4种通讯能力，分别对应了前后2条流水上接受和发送的能力。megatron在实现的时候有一个专门的函数用来实现这种功能，下面是源码：
 def communicate(tensor_send_next, tensor_send_prev, recv_forward, recv_backward): &#34;&#34;&#34;Communicate tensors between stages.&#34;&#34;&#34; args = get_args() # Create placeholder tensors for receive in forward and backward directions # if needed....</p>
   </div>
-  <footer class="entry-footer"><span title='2024-03-25 23:34:01 +0800 CST'>March 25, 2024</span>&nbsp;·&nbsp;2 min&nbsp;·&nbsp;251 words&nbsp;·&nbsp;Me</footer>
+  <footer class="entry-footer"><span title='2024-03-25 23:34:01 +0800 CST'>March 25, 2024</span></footer>
   <a class="entry-link" aria-label="post link to Megatron Lm Pipline" href="https://dawson-chen.github.io/posts/megatron-lm-pipline/"></a>
 </article>
     </main>

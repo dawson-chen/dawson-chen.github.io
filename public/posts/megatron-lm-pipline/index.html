@@ -31,17 +31,17 @@ Interleaved 1F1B 我们在与传统流水线的类比中解释过，流水线切
 节点间通讯 以传统的流水线为例，假设我们需要用代码实现一个多进程的流水线。那么要素一共有3个：
 等待上一个节点的执行结果； 执行当前节点的操作； 将结果传给下一个节点； PP实现的时候，因为每个节点对应了前向后向2条流水线，所以需要4种通讯能力，分别对应了前后2条流水上接受和发送的能力。megatron在实现的时候有一个专门的函数用来实现这种功能，下面是源码：
 def communicate(tensor_send_next, tensor_send_prev, recv_forward, recv_backward): &#34;&#34;&#34;Communicate tensors between stages.&#34;&#34;&#34; args = get_args() # Create placeholder tensors for receive in forward and backward directions # if needed.">
-<meta name="author" content="Me">
+<meta name="author" content="">
 <link rel="canonical" href="https://dawson-chen.github.io/posts/megatron-lm-pipline/">
 <meta name="google-site-verification" content="XYZabc">
 <meta name="yandex-verification" content="XYZabc">
 <meta name="msvalidate.01" content="XYZabc">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
-<link rel="icon" href="https://dawson-chen.github.io/%3Clink%20/%20abs%20url%3E">
-<link rel="icon" type="image/png" sizes="16x16" href="https://dawson-chen.github.io/%3Clink%20/%20abs%20url%3E">
-<link rel="icon" type="image/png" sizes="32x32" href="https://dawson-chen.github.io/%3Clink%20/%20abs%20url%3E">
-<link rel="apple-touch-icon" href="https://dawson-chen.github.io/%3Clink%20/%20abs%20url%3E">
-<link rel="mask-icon" href="https://dawson-chen.github.io/%3Clink%20/%20abs%20url%3E">
+<link rel="icon" href="https://dawson-chen.github.io/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="https://dawson-chen.github.io/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://dawson-chen.github.io/favicon-32x32.png">
+<link rel="apple-touch-icon" href="https://dawson-chen.github.io/apple-touch-icon.png">
+<link rel="mask-icon" href="https://dawson-chen.github.io/safari-pinned-tab.svg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
 <link rel="alternate" hreflang="en" href="https://dawson-chen.github.io/posts/megatron-lm-pipline/">
@@ -107,14 +107,11 @@ Interleaved 1F1B 我们在与传统流水线的类比中解释过，流水线切
 等待上一个节点的执行结果； 执行当前节点的操作； 将结果传给下一个节点； PP实现的时候，因为每个节点对应了前向后向2条流水线，所以需要4种通讯能力，分别对应了前后2条流水上接受和发送的能力。megatron在实现的时候有一个专门的函数用来实现这种功能，下面是源码：
 def communicate(tensor_send_next, tensor_send_prev, recv_forward, recv_backward): &#34;&#34;&#34;Communicate tensors between stages.&#34;&#34;&#34; args = get_args() # Create placeholder tensors for receive in forward and backward directions # if needed." />
 <meta property="og:type" content="article" />
-<meta property="og:url" content="https://dawson-chen.github.io/posts/megatron-lm-pipline/" />
-<meta property="og:image" content="https://dawson-chen.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E" />
-<meta property="article:section" content="posts" />
+<meta property="og:url" content="https://dawson-chen.github.io/posts/megatron-lm-pipline/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2024-03-25T23:34:01+08:00" />
-<meta property="article:modified_time" content="2024-03-25T23:34:01+08:00" /><meta property="og:site_name" content="ExampleSite" />
+<meta property="article:modified_time" content="2024-03-25T23:34:01+08:00" />
 
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:image" content="https://dawson-chen.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E" />
+<meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content="Megatron Lm Pipline"/>
 <meta name="twitter:description" content="Megatron中包含了大多数目前大模型预训练中所需要的并行技术，并且相较于Deepspeed在硬件层面可以得到更多的优化支持。Megatron的优势体现在其先进的并行化设计上面，而其中流水线并行是非常重要的创新点。相比于tensor并行，流水线并行对通讯的压力更小，使得多机训练超大模型成为可能。而在现代工业生产体系里，流水线早已经是一种耳熟能详的科学管理方式。本文中我们结合工业流水线的视角，分析megatron中流水线的设计与具体实现方式。
 在大模型蓬勃发展的时代，超大模型训练对框架能力的要求越来越高，工作分工也逐渐演变成算法&#43;框架工程师2部分合作的模式。虽然说专业的人干专业的事情，但是算法工程师对框架原理有一定了解依然是必要的。这里有3个我认为重要的理由：
@@ -175,12 +172,8 @@ def communicate(tensor_send_next, tensor_send_prev, recv_forward, recv_backward)
   "articleBody": "Megatron中包含了大多数目前大模型预训练中所需要的并行技术，并且相较于Deepspeed在硬件层面可以得到更多的优化支持。Megatron的优势体现在其先进的并行化设计上面，而其中流水线并行是非常重要的创新点。相比于tensor并行，流水线并行对通讯的压力更小，使得多机训练超大模型成为可能。而在现代工业生产体系里，流水线早已经是一种耳熟能详的科学管理方式。本文中我们结合工业流水线的视角，分析megatron中流水线的设计与具体实现方式。\n在大模型蓬勃发展的时代，超大模型训练对框架能力的要求越来越高，工作分工也逐渐演变成算法+框架工程师2部分合作的模式。虽然说专业的人干专业的事情，但是算法工程师对框架原理有一定了解依然是必要的。这里有3个我认为重要的理由：\n模型训练中遇到的大多数的问题是算法和工程的混合问题； 算法工程师需要能够独立开发一些小需求； 有助于和框架工程师沟通效率的提升； 认识流水线 除了曾经在流水线上短暂的工作经验之外，我对流水线的认识主要来自于一个汽车工业发展早期的故事。\n1903年的美国底特律，一位出生自普通家庭的汽车工程师亨利福特开始了他的第二次创业。福特拥有多年的汽车设计经验，在上次创业过程中他制造出了性能出众的汽车，虽然通过早期的赛事证明了自己，但最终因为汽车造价太高而导致无法被大众接受，从而导致公司破产。这次福特吸取经验打算将目光瞄向民用市场，制造可以被广大的农场主接受的汽车。\n通过多年快速的技术迭代后，在1908年福特推出了后来鼎鼎大名的T型车，出色的设计以及过硬的质量使得该车很快成为了市场上的抢手货。到了1913年，福特已经是美国最出名的企业家之一，个人财富更是达到了数十亿。此时，可以说是名利双收的福特却开心不起来，一方面T型车的订单已经排到了几个月以后，另一方面工厂的生产效率却一直提不上去。为了实现当初定下的目标，福特目前最关心的只有2件事情，一是继续扩大产能，二是降低汽车的成本。放到今天的工业生产模式下，扩大生产几乎就等于降低产品成本，但在当时的手工作坊装配模式下，扩大生产意味着人才需求的直线上升以及巨大的管理成本，福特知道生产模式的变革已经迫在眉睫。\n1913年福特引入了流水线作为装配生产的形式，从最初的车架被推上流水线，经过各个部件的装配，最终被推下流水线，全流程耗时不过几个小时。效率的提升不光将产能提升数倍，同时汽车的成本下降到原来的一半，也为后来福特推出双休制拉高工人工资奠定了基础。毫无疑问，这是福特汽车发展史上最辉煌的时代。\n为什么一个简单的流水线能够带来这么大的改变，我们分析一下流水线的特点，首先是将原来复杂的工作流程切分成多个小块，每个工人只需要负责其中某个单子的工序，降低了对装配工人技术的依赖；另外，不同于传统的扩大生产需要同时扩大生产设备的模式，流水线并不需要设备的增加，保证了成本降低；最后也是最重要的，流水线子程序划分的越细小，生产效率的提升越高。\n为什么要讲这个故事，因为在Megatron中使用的流水线并行的思想与工业生产中的流水线不能说一模一样，只能说是完全一致。对传统流水线有基本的认知可以帮助理解流水线并行，另外哪有那么多创新啊，说白了就是互相借鉴罢了。\n流水线并行设计 流水线并行的英文是Pipline Parallelism，后面简称PP。\n生产生产中的流水线是把一个复杂的过程拆分成多个简单的子过程，每个工人只负责其中的一部分。在模型推理中的PP与传统流水线是完全一致的，大模型被按照层数拆成多个子模型，由单独的GPU设备负责子模型的推理计算，每个节点做的事情就是不断的接收前面节点的输入，然后计算完并将结果传给后面的节点。整个流水线的吞吐量与流水线的细分程度相关，并成线性关系（忽略切分的不均匀度，以及进入时间和流出时间）。\n当PP用在训练过程中的时候，事情发生了一点变化。因为训练是一个双向的过程，所以整个流水线会变成如上图所示。此时流水线的进入节点和流出节点是同一个，或者可以理解为每个节点同时处在2条方向相反的流水线中。此时，每个节点执行前向动作与后向动作的序列方式就叫做流水线策略。下面从简单到复杂介绍3种不同的流水线策略，并通过简单的语言说明设计的原理。\nFill-Drain Fill-Drain就是先运行前向流水线，然后再执行反向流水线。整体的流程如下图所示：\n通过类比生产流水线，我们很好理解当流水线开始运行的时候，处于流水线后面的节点会有一段等待时间。所以出于利用率考虑，我们在使用流水线的时候，希望执行的长度越多越好。在PP里面，就是我们希望在前向流水线执行足够多的批次之后再开始执行反向流水线，从而降低设备空闲的时间，在这个图里面也可以叫做bubble time。\n然而，事情并没有那么顺利，我们知道模型在前向过程中需要记录计算的激活值，用来在反向传播的时候计算对当前节点输入的梯度。所以节点的显存上限决定了序列长度的最大值，因此引出了1F1B的流水线策略。\nOne Forward and One Backward(1F1B) 显然，如果降低了激活值带来的显存消耗，就可以尽可能的增加执行的序列长度。因为前向流水线执行过程中，输入是分批次的，每个批次对应的梯度是可以单独计算的，所以第1份输入对应的梯度并不需要等所有批次都执行完后才开始计算。由此可见，在流水线中需要尽量提前反向传播的时间是一种有效的方式。每个批次梯度计算最早的时间节点就是在最后一个前向流水线节点执行完之后，因此形成的策略就是流水线中的每个节点在执行完前向之后，只要有反向流水线的任务，就需要执行一次反向流水线的任务。\n最终形成的序列执行顺序如上图所示，这种方式相对于Fill-Drain并没有减少气泡的时间，但是因为降低了激活值占用的显存，因此可以使用更长的序列长度，从而增加了设备的利用率。\nInterleaved 1F1B 我们在与传统流水线的类比中解释过，流水线切分的越细，整体的吞吐量越高。但是当设备数量一定的情况下，有没有办法能够增加流水线切分的粒度呢，那就是Interleaved 1F1B。\n如上图所示，这种方式是将流水线划分的更细，但是因为设备数量是固定的，所以每个节点上需要执行多个子模型，最终流水线执行如下图所示：\n事实上，这种情况下每个设备节点同时处于4条流水线中，2条前向流水线，2条后向流水线。这种方式可以减少bubble time，从而提升了设备利用率。\n代码实现 其实只要理解PP设计的原理，那么代码写起来也是非常清晰的。我们先用伪代码描述整个流程，然后分析一下megatron实现过程中的要点。megatron里主要使用的是1F1B的调度方法，因此我们以1F1B为例进行分析，其他实现类似。\n虽然流水线调度看起来很复杂，但其特点是每个节点的操作逻辑基本是一致的，边界情况也很清晰，所以实现的时候只需要考虑每个节点的执行逻辑即可。\n节点间通讯 以传统的流水线为例，假设我们需要用代码实现一个多进程的流水线。那么要素一共有3个：\n等待上一个节点的执行结果； 执行当前节点的操作； 将结果传给下一个节点； PP实现的时候，因为每个节点对应了前向后向2条流水线，所以需要4种通讯能力，分别对应了前后2条流水上接受和发送的能力。megatron在实现的时候有一个专门的函数用来实现这种功能，下面是源码：\ndef communicate(tensor_send_next, tensor_send_prev, recv_forward, recv_backward): \"\"\"Communicate tensors between stages.\"\"\" args = get_args() # Create placeholder tensors for receive in forward and backward directions # if needed. tensor_recv_prev = None tensor_recv_next = None tensor_shape = (args.seq_length, args.micro_batch_size, args.hidden_size) dtype = args.params_dtype if args.fp32_residual_connection: dtype = torch.float if recv_forward: tensor_recv_prev = torch.empty(tensor_shape, requires_grad=True, device=torch.cuda.current_device(), dtype=dtype) if recv_backward: tensor_recv_next = torch.empty(tensor_shape, requires_grad=True, device=torch.cuda.current_device(), dtype=dtype) # Send tensors in both the forward and backward directions as appropriate. ops = [] if tensor_send_prev is not None: send_prev_op = torch.distributed.P2POp(torch.distributed.isend, tensor_send_prev, mpu.get_pipeline_model_parallel_prev_rank()) ops.append(send_prev_op) if tensor_recv_prev is not None: recv_prev_op = torch.distributed.P2POp(torch.distributed.irecv, tensor_recv_prev, mpu.get_pipeline_model_parallel_prev_rank()) ops.append(recv_prev_op) if tensor_send_next is not None: send_next_op = torch.distributed.P2POp(torch.distributed.isend, tensor_send_next, mpu.get_pipeline_model_parallel_next_rank()) ops.append(send_next_op) if tensor_recv_next is not None: recv_next_op = torch.distributed.P2POp(torch.distributed.irecv, tensor_recv_next, mpu.get_pipeline_model_parallel_next_rank()) ops.append(recv_next_op) reqs = torch.distributed.batch_isend_irecv(ops) for req in reqs: req.wait() return tensor_recv_prev, tensor_recv_next torch.distributed.P2POp是点对点操作的封装类，torch.distributed.isend是要执行的异步操作，操作执行发生在torch.distributed.batch_isend_irecv里。\n调度流程伪代码 下面为1F1B的整体流程，megatron在实现的时候将warmup和cooldown单独拆分出来，其他逻辑大体是一致的，感兴趣的可以参照着去看源代码。\ndef forward_backward_step(losses): ## 1F1B # forward stage if not cooldown_stage(): if not is_first_node(): fwd_inputs = wait recieve_forward_pipline() else: fwd_inputs = next(data_loader) fwd_outputs = model.inference(fwd_inputs) wait send_forward_pipline(fwd_outputs) # backward stage if not warmup_stage(): if is_last_node(): loss = fwd_outputs losses.append(loss) bwd_outputs = optimizer.backward(model, loss) wait send_backward_outputs(bwd_outputs) else: bwd_inputs = wait recieve_backward_outputs() bwd_outputs = optimizer.backward(model, bwd_inputs) if not is_first_node(): wait send_backward_outputs(bwd_outputs) losses = [] while len(losses) != num_micro_batches: forward_backward_step(losses) optimizer.step() 推荐大家刚开始学习megatron-lm的时候去看一下v2.0的版本，包含了pipline parallelism，tensor parallelism，data parallelism，fp16混合精度训练 的特性，一共1w行代码比较简单易懂。\n",
   "wordCount" : "251",
   "inLanguage": "en",
-  "image": "https://dawson-chen.github.io/%3Clink%20or%20path%20of%20image%20for%20opengraph,%20twitter-cards%3E","datePublished": "2024-03-25T23:34:01+08:00",
+  "datePublished": "2024-03-25T23:34:01+08:00",
   "dateModified": "2024-03-25T23:34:01+08:00",
-  "author":{
-    "@type": "Person",
-    "name": "Me"
-  },
   "mainEntityOfPage": {
     "@type": "WebPage",
     "@id": "https://dawson-chen.github.io/posts/megatron-lm-pipline/"
@@ -190,7 +183,7 @@ def communicate(tensor_send_next, tensor_send_prev, recv_forward, recv_backward)
     "name": "DawsonChen's Blog",
     "logo": {
       "@type": "ImageObject",
-      "url": "https://dawson-chen.github.io/%3Clink%20/%20abs%20url%3E"
+      "url": "https://dawson-chen.github.io/favicon.ico"
     }
   }
 }
@@ -212,9 +205,7 @@ def communicate(tensor_send_next, tensor_send_prev, recv_forward, recv_backward)
 <header class="header">
     <nav class="nav">
         <div class="logo">
-            <a href="https://dawson-chen.github.io/" accesskey="h" title="Home (Alt + H)">
-                <img src="https://dawson-chen.github.io/apple-touch-icon.png" alt="" aria-label="logo"
-                    height="35">Home</a>
+            <a href="https://dawson-chen.github.io/" accesskey="h" title="DawsonChen&#39;s Blog (Alt + H)">DawsonChen&#39;s Blog</a>
             <div class="logo-switches">
                 <button id="theme-toggle" accesskey="t" title="(Alt + T)">
                     <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
@@ -246,11 +237,11 @@ def communicate(tensor_send_next, tensor_send_prev, recv_forward, recv_backward)
 
 <article class="post-single">
   <header class="post-header">
-    <div class="breadcrumbs"><a href="https://dawson-chen.github.io/">Home</a>&nbsp;»&nbsp;<a href="https://dawson-chen.github.io/posts/">Posts</a></div>
+    
     <h1 class="post-title entry-hint-parent">
       Megatron Lm Pipline
     </h1>
-    <div class="post-meta"><span title='2024-03-25 23:34:01 +0800 CST'>March 25, 2024</span>&nbsp;·&nbsp;2 min&nbsp;·&nbsp;251 words&nbsp;·&nbsp;Me&nbsp;|&nbsp;<a href="https://github.com/%3cpath_to_repo%3e/content/posts/megatron-lm-pipline.md" rel="noopener noreferrer" target="_blank">Suggest Changes</a>
+    <div class="post-meta"><span title='2024-03-25 23:34:01 +0800 CST'>March 25, 2024</span>&nbsp;|&nbsp;<a href="https://github.com/%3cpath_to_repo%3e/content/posts/megatron-lm-pipline.md" rel="noopener noreferrer" target="_blank">Suggest Changes</a>
 
 </div>
   </header> 
@@ -393,82 +384,6 @@ def communicate(tensor_send_next, tensor_send_prev, recv_forward, recv_backward)
   <footer class="post-footer">
     <ul class="post-tags">
     </ul>
-<nav class="paginav">
-  <a class="prev" href="https://dawson-chen.github.io/posts/megatron-lm-moe/">
-    <span class="title">« Prev</span>
-    <br>
-    <span>Megatron Lm Moe</span>
-  </a>
-</nav>
-
-
-<ul class="share-buttons">
-    <li>
-        <a target="_blank" rel="noopener noreferrer" aria-label="share Megatron Lm Pipline on x"
-            href="https://x.com/intent/tweet/?text=Megatron%20Lm%20Pipline&amp;url=https%3a%2f%2fdawson-chen.github.io%2fposts%2fmegatron-lm-pipline%2f&amp;hashtags=">
-            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
-                <path
-                    d="M512 62.554 L 512 449.446 C 512 483.97 483.97 512 449.446 512 L 62.554 512 C 28.03 512 0 483.97 0 449.446 L 0 62.554 C 0 28.03 28.029 0 62.554 0 L 449.446 0 C 483.971 0 512 28.03 512 62.554 Z M 269.951 190.75 L 182.567 75.216 L 56 75.216 L 207.216 272.95 L 63.9 436.783 L 125.266 436.783 L 235.9 310.383 L 332.567 436.783 L 456 436.783 L 298.367 228.367 L 432.367 75.216 L 371.033 75.216 Z M 127.633 110 L 164.101 110 L 383.481 400.065 L 349.5 400.065 Z" />
-            </svg>
-        </a>
-    </li>
-    <li>
-        <a target="_blank" rel="noopener noreferrer" aria-label="share Megatron Lm Pipline on linkedin"
-            href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https%3a%2f%2fdawson-chen.github.io%2fposts%2fmegatron-lm-pipline%2f&amp;title=Megatron%20Lm%20Pipline&amp;summary=Megatron%20Lm%20Pipline&amp;source=https%3a%2f%2fdawson-chen.github.io%2fposts%2fmegatron-lm-pipline%2f">
-            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
-                <path
-                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
-            </svg>
-        </a>
-    </li>
-    <li>
-        <a target="_blank" rel="noopener noreferrer" aria-label="share Megatron Lm Pipline on reddit"
-            href="https://reddit.com/submit?url=https%3a%2f%2fdawson-chen.github.io%2fposts%2fmegatron-lm-pipline%2f&title=Megatron%20Lm%20Pipline">
-            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
-                <path
-                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
-            </svg>
-        </a>
-    </li>
-    <li>
-        <a target="_blank" rel="noopener noreferrer" aria-label="share Megatron Lm Pipline on facebook"
-            href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2fdawson-chen.github.io%2fposts%2fmegatron-lm-pipline%2f">
-            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
-                <path
-                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
-            </svg>
-        </a>
-    </li>
-    <li>
-        <a target="_blank" rel="noopener noreferrer" aria-label="share Megatron Lm Pipline on whatsapp"
-            href="https://api.whatsapp.com/send?text=Megatron%20Lm%20Pipline%20-%20https%3a%2f%2fdawson-chen.github.io%2fposts%2fmegatron-lm-pipline%2f">
-            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
-                <path
-                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
-            </svg>
-        </a>
-    </li>
-    <li>
-        <a target="_blank" rel="noopener noreferrer" aria-label="share Megatron Lm Pipline on telegram"
-            href="https://telegram.me/share/url?text=Megatron%20Lm%20Pipline&amp;url=https%3a%2f%2fdawson-chen.github.io%2fposts%2fmegatron-lm-pipline%2f">
-            <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28" height="30px" width="30px" fill="currentColor">
-                <path
-                    d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
-            </svg>
-        </a>
-    </li>
-    <li>
-        <a target="_blank" rel="noopener noreferrer" aria-label="share Megatron Lm Pipline on ycombinator"
-            href="https://news.ycombinator.com/submitlink?t=Megatron%20Lm%20Pipline&u=https%3a%2f%2fdawson-chen.github.io%2fposts%2fmegatron-lm-pipline%2f">
-            <svg version="1.1" xml:space="preserve" width="30px" height="30px" viewBox="0 0 512 512" fill="currentColor"
-                xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
-                <path
-                    d="M449.446 0C483.971 0 512 28.03 512 62.554L512 449.446C512 483.97 483.97 512 449.446 512L62.554 512C28.03 512 0 483.97 0 449.446L0 62.554C0 28.03 28.029 0 62.554 0L449.446 0ZM183.8767 87.9921H121.8427L230.6673 292.4508V424.0079H281.3328V292.4508L390.1575 87.9921H328.1233L256 238.2489z" />
-            </svg>
-        </a>
-    </li>
-</ul>
-
   </footer>
 </article>
     </main>
