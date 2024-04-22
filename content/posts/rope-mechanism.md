@@ -1,7 +1,7 @@
 +++
 title = 'Rope背后的数学想象力'
 date = 2023-08-06T23:57:25+08:00
-draft = true
+draft = false
 math = true
 +++
 

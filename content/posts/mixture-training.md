@@ -1,7 +1,7 @@
 +++
 title = '混合精度训练'
 date = 2023-07-05T22:05:35+08:00
-draft = true
+draft = false
 math = true
 +++
 

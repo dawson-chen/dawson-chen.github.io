@@ -1,7 +1,7 @@
 +++
 title = 'ChatGPT Plugins原理介绍和讨论'
 date = 2023-04-07T20:43:43+08:00
-draft = true
+draft = false
 math = true
 +++
 ## 背景

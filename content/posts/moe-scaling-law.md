@@ -1,7 +1,7 @@
 +++
 title = 'Moe的Scaling Law'
 date = 2023-12-22T23:39:21+08:00
-draft = true
+draft = false
 math = true
 +++
 

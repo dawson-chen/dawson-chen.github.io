@@ -1,7 +1,7 @@
 +++
 title = 'Deepspeed原理（手写笔记）'
 date = 2023-07-05T23:42:36+08:00
-draft = true
+draft = false
 +++
 
 ## 前言

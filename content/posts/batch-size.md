@@ -1,7 +1,7 @@
 +++
 title = 'Batch Size杂谈'
 date = 2024-01-22T23:36:14+08:00
-draft = true
+draft = false
 math = true
 +++
 
