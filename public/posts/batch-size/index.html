@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Batch Size杂谈 | DawsonChen&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="在OpenAI 2018年的一篇论文《An Empirical Model of Large-Batch Training》中就介绍了batch size的选择问题，论文中gradient noise scale作为选择batch size的关键指标。
+简单来说，我们实际中用的SGD产生的loss是真实loss的一种近似，这种近似对应的偏差和我们选择的batch size相关，batch size越大偏差越小。究其本质原因，近似的偏差与批数据的信息有关，当训练loss比较大的时候 可以认为数据中的所有信息都是相关信息，而当loss越来越小，批数据中包含的信息偏差占比会越来越高。
+论文中最大的亮点在于通过严密的推论得出上面的结论，并且推导出固定的模型要达到相同的loss，在不同的batch size下所需训练时长和需要的训练数据量之间的关系，如下所示： $$ (\frac{S}{S_{min}}-1)(\frac{E}{E_{min}}-1)=1 \tag{A1} $$ 其中$E=BS$表示训练使用的数据，通过这个公式，可以得到：
+batch size越大，训练step减小，所需的数据会增加； 训练所需的步数有最小值； 分别解释一下，第一点是因为：当数据中有用信息占比高得时候，小batch size和大batch size得到得梯度方向是差不多的，因此数据的使用率就比较低。第二点，同样是数据的利用效率，如果把batch size很大的情况下，gradient noise已经很小，继续将batch size翻倍得到的收益就很小，所以即使batch size增加到很大，依然需要一定数量的更新步数，也就是$S_{min}$。
+论文中基于gradient noise scale给出一个batch size的经验选择是$B=E_{min}/S_{min}$，在OpenAI Scaling Laws论文中进一步根据经验总结为： $$ B_{crit}\approx \frac{B_}{L^{1/\alpha_B }} \tag{3} $$ 其中，$B_$和$\alpha_B$为经验拟合值，分别约等于$2\times10^8$和$0.21$。
+问题：为什么梯度累积太大会导致loss升高？
+如果batch size远小于$B_{crit}$那么训练的时间会大大增加，但是并不会显著的减小需要的训练量。需要注意的是这里假设了无限的并行条件，当我们在实际中使用梯度累积增大batch size，使得更接近$B_{crit}$​，那么训练总步数会减少，但是总的时间反而会增加。
+下面进行说明，根据公式A1可以得到： $$ E=\frac{E_{min}}{1-\frac{S_{min}}{S}} $$ 意味着，当我通过梯度累积增加batch size，S会减小 但是为了达到同样loss所需的训练数据会增加。而梯度累积并不影响训练速度，过相同的case需要的时间是一样的，也就是需要更多的时间才可以达到同样的loss。
+这个结论也告诉我们，如果只是为了提升训练速度或者提升训练效果，梯度累积并不会有帮助。当然还由其他的影响因素，比如PP并行方式需要大的batch size提升计算效率，或者提升算法训练的稳定性。
+不同batch size下数据的修正 由公式A1得到： $$ D_{min} = \frac{D}{1&#43;\frac{B}{B_{crit}}} $$ 如果2个不同的batch size，达到相同的loss所需数据量的比值为： $$ \frac{D_1}{D_2} = \frac{B_{crit}&#43;B_1}{B_{crit}&#43;B_2} $$ 通过这个修正公式可以看到，如果选择了不正确的batch size，那么会导致实际训练的token的作用并没有最大化。所以，可能会出现实际训练1.">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/batch-size/">
+<meta name="google-site-verification" content="XYZabc">
+<meta name="yandex-verification" content="XYZabc">
+<meta name="msvalidate.01" content="XYZabc">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/batch-size/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.css"
+    integrity="sha384-bYdxxUwYipFNohQlHt0bjN/LCpueqWz13HufFEV1SUatKs1cm4L6fFgCi1jT643X" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.js"
+    integrity="sha384-Qsn9KnoKISj6dI8g7p1HBlNpVx0I8p1SvlwOldgi3IorMle61nQy4zEahWYtljaz"
+    crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/contrib/auto-render.min.js"
+    integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+    crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+            
+            
+            delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '$', right: '$', display: false },
+                { left: '\\(', right: '\\)', display: false },
+                { left: '\\[', right: '\\]', display: true }
+            ],
+            
+            throwOnError: false
+        });
+    });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+
+const config = {
+    startOnLoad:true,
+    theme: 'forest',
+    themeVariables: {
+        lineColor: "#fafafa"    
+    },
+    flowchart: {
+        useMaxWidth:false,
+        htmlLabels:true
+        }
+};
+mermaid.initialize(config);
+
+
+window.onload = () => {
+    window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="DawsonChen&#39;s Blog (Alt + H)">DawsonChen&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Batch Size杂谈
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h1>
+    <div class="post-meta"><span title='2024-01-22 23:36:14 +0800 CST'>January 22, 2024</span>&nbsp;|&nbsp;<a href="https://github.com/%3cpath_to_repo%3e/content/posts/batch-size.md" rel="noopener noreferrer" target="_blank">Suggest Changes</a>
+
+</div>
+  </header> 
+  <div class="post-content"><p>在OpenAI 2018年的一篇论文《An Empirical Model of Large-Batch Training》中就介绍了batch size的选择问题，论文中gradient noise scale作为选择batch size的关键指标。</p>
+<p>简单来说，我们实际中用的SGD产生的loss是真实loss的一种近似，这种近似对应的偏差和我们选择的batch size相关，batch size越大偏差越小。究其本质原因，近似的偏差与批数据的信息有关，当训练loss比较大的时候 可以认为数据中的所有信息都是相关信息，而当loss越来越小，批数据中包含的信息偏差占比会越来越高。</p>
+<p>论文中最大的亮点在于通过严密的推论得出上面的结论，并且推导出固定的模型要达到相同的loss，在不同的batch size下所需训练时长和需要的训练数据量之间的关系，如下所示：
+$$
+(\frac{S}{S_{min}}-1)(\frac{E}{E_{min}}-1)=1 \tag{A1}
+$$
+其中$E=BS$表示训练使用的数据，通过这个公式，可以得到：</p>
+<ul>
+<li>batch size越大，训练step减小，所需的数据会增加；</li>
+<li>训练所需的步数有最小值；</li>
+</ul>
+<p>分别解释一下，第一点是因为：当数据中有用信息占比高得时候，小batch size和大batch size得到得梯度方向是差不多的，因此数据的使用率就比较低。第二点，同样是数据的利用效率，如果把batch size很大的情况下，gradient noise已经很小，继续将batch size翻倍得到的收益就很小，所以即使batch size增加到很大，依然需要一定数量的更新步数，也就是$S_{min}$。</p>
+<p>论文中基于gradient noise scale给出一个batch size的经验选择是$B=E_{min}/S_{min}$，在OpenAI Scaling Laws论文中进一步根据经验总结为：
+$$
+B_{crit}\approx \frac{B_<em>}{L^{1/\alpha_B }} \tag{3}
+$$
+其中，$B_</em>$和$\alpha_B$为经验拟合值，分别约等于$2\times10^8$和$0.21$。</p>
+<p><strong>问题：为什么梯度累积太大会导致loss升高？</strong></p>
+<p>如果batch size远小于$B_{crit}$那么训练的时间会大大增加，但是并不会显著的减小需要的训练量。需要注意的是这里假设了无限的并行条件，当我们在实际中使用梯度累积增大batch size，使得更接近$B_{crit}$​，那么训练总步数会减少，但是总的时间反而会增加。</p>
+<p>下面进行说明，根据公式A1可以得到：
+$$
+E=\frac{E_{min}}{1-\frac{S_{min}}{S}}
+$$
+意味着，当我通过梯度累积增加batch size，S会减小 但是为了达到同样loss所需的训练数据会增加。而梯度累积并不影响训练速度，过相同的case需要的时间是一样的，也就是需要更多的时间才可以达到同样的loss。</p>
+<p>这个结论也告诉我们，如果只是为了提升训练速度或者提升训练效果，梯度累积并不会有帮助。当然还由其他的影响因素，比如PP并行方式需要大的batch size提升计算效率，或者提升算法训练的稳定性。</p>
+<h4 id="不同batch-size下数据的修正">不同batch size下数据的修正<a hidden class="anchor" aria-hidden="true" href="#不同batch-size下数据的修正">#</a></h4>
+<p>由公式A1得到：
+$$
+D_{min} = \frac{D}{1+\frac{B}{B_{crit}}}
+$$
+如果2个不同的batch size，达到相同的loss所需数据量的比值为：
+$$
+\frac{D_1}{D_2} = \frac{B_{crit}+B_1}{B_{crit}+B_2}
+$$
+通过这个修正公式可以看到，如果选择了不正确的batch size，那么会导致实际训练的token的作用并没有最大化。所以，可能会出现实际训练1.2T的token，但实际上仅相当于500B的效果。</p>
+<blockquote>
+<p>欢迎关注我的个人公众号：AI学舍</p>
+</blockquote>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2024 <a href="http://localhost:1313/">DawsonChen&#39;s Blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

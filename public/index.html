@@ -2,28 +2,28 @@
 <html lang="en" dir="auto">
 
 <head>
-	<meta name="generator" content="Hugo 0.124.1"><meta charset="utf-8">
+	<meta name="generator" content="Hugo 0.124.1"><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="robots" content="index, follow">
+<meta name="robots" content="noindex, nofollow">
 <title>DawsonChen&#39;s Blog</title>
 
 <meta name="description" content="">
 <meta name="author" content="">
-<link rel="canonical" href="https://dawson-chen.github.io/">
+<link rel="canonical" href="http://localhost:1313/">
 <meta name="google-site-verification" content="XYZabc">
 <meta name="yandex-verification" content="XYZabc">
 <meta name="msvalidate.01" content="XYZabc">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
-<link rel="icon" href="https://dawson-chen.github.io/favicon.ico">
-<link rel="icon" type="image/png" sizes="16x16" href="https://dawson-chen.github.io/favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="https://dawson-chen.github.io/favicon-32x32.png">
-<link rel="apple-touch-icon" href="https://dawson-chen.github.io/apple-touch-icon.png">
-<link rel="mask-icon" href="https://dawson-chen.github.io/safari-pinned-tab.svg">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
-<link rel="alternate" type="application/rss+xml" href="https://dawson-chen.github.io/index.xml">
-<link rel="alternate" hreflang="en" href="https://dawson-chen.github.io/">
+<link rel="alternate" type="application/rss+xml" href="http://localhost:1313/index.xml">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/">
 <noscript>
     <style>
         #theme-toggle,
@@ -60,26 +60,28 @@
         }
 
     </style>
-</noscript><meta property="og:title" content="DawsonChen&#39;s Blog" />
-<meta property="og:description" content="" />
-<meta property="og:type" content="website" />
-<meta property="og:url" content="https://dawson-chen.github.io/" />
+</noscript>
 
-<meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="DawsonChen&#39;s Blog"/>
-<meta name="twitter:description" content=""/>
 
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "name": "DawsonChen's Blog",
-  "url": "https://dawson-chen.github.io/",
-  "description": "",
-  "thumbnailUrl": "https://dawson-chen.github.io/favicon.ico",
-  "sameAs": [
-      "https://twitter.com/AllenCh52379145", "https://github.com/dawson-chen/dawson-chen.github.io"
-  ]
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+
+const config = {
+    startOnLoad:true,
+    theme: 'forest',
+    themeVariables: {
+        lineColor: "#fafafa"    
+    },
+    flowchart: {
+        useMaxWidth:false,
+        htmlLabels:true
+        }
+};
+mermaid.initialize(config);
+
+
+window.onload = () => {
+    window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
 }
 </script>
 </head>
@@ -99,7 +101,7 @@
 <header class="header">
     <nav class="nav">
         <div class="logo">
-            <a href="https://dawson-chen.github.io/" accesskey="h" title="DawsonChen&#39;s Blog (Alt + H)">DawsonChen&#39;s Blog</a>
+            <a href="http://localhost:1313/" accesskey="h" title="DawsonChen&#39;s Blog (Alt + H)">DawsonChen&#39;s Blog</a>
             <div class="logo-switches">
                 <button id="theme-toggle" accesskey="t" title="(Alt + T)">
                     <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
@@ -161,7 +163,41 @@
 
 <article class="post-entry"> 
   <header class="entry-header">
-    <h2 class="entry-hint-parent">Megatron Lm Moe
+    <h2 class="entry-hint-parent">MoE to Dense介绍以及相关论文速览
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>背景 MoE模型可以在推理算力不变的情况下，继续扩大模型的规模，从而获得到scaling up带来提升。但是在实际应用场景下，这种提升并非没有代价。
+模型的推理性能；
+因为MoE训练带来显著的通讯量提升，并且在越大规模上面这种提升越巨大，所以MoE的训练性能相比于同样激活参数量的Dense网络只有50%~80%。但当模型处于真实应用场景下，相比与训练性能，我们更关心的是MoE模型的推理性能，MoE模型的推理性能严重依赖于设备之间的通讯带宽，因此会给部署带来额外的成本。
+端侧应用的限制；
+MoE模型虽然激活参数较少，但是模型的总参数量会增大数倍，这在端侧这种内存受限的场景下应用起来并不容易。虽然，在服务端应用的时候可以通过EP这种方式极大的降低总参数量带来的影响。
+因此MoE to Dense的技术可以使MoE模型能够克服上面2个缺点（当然了，因为已经变成一个彻底的Dense模型）。并且，考虑到MoE模型expert之间存在极大的冗余性，缩小MoE总参数量就看起来是非常合理的一种需求了。
+2篇相关论文 One Student Knows All Experts Know: From Sparse to Dense National University of Singapore, Huawei, Oct 2022
+总结：
+应该是第一篇提出将MoE能力压缩到Dense中，看得出来Huawei在发展MoE技术上还是走到前面的。同时结合手机业务的应用场景（背景中说的第2点），提出了MoE to Dense的技术。
+文章提出了一项任务knowledge gather，就是将多个expert中的知识合并到单个expert中，以训练出与 MoE 模型效果类似的稠密学生模型。该任务分为知识收集和知识蒸馏两个阶段，知识收集中探索了四种不同的知识收集方法，知识蒸馏则利用整合好的知识进一步优化学生模型。在实验中，该方法在计算机视觉和自然语言处理两个领域取得了优异的表现。
+知识收集方法分为4种：summation、averaging、Top-K Knowledge Gathering (Top-KG)、Singular Value Decomposition Knowledge Gathering (SVD-KG)。前2个方法类似于模型的参数合并，而后面2种方法是论文中提出的，可以尽可能把重要的参数提取出来。不管用哪种方法，合并都给参数中引入了噪声，因此下一步就是用蒸馏的方式恢复模型的能力。
+论文中的主要创新应该是知识收集的方式，那么最终要的应该是验证知识收集的能力，但可惜的是给出的结果并没有充分的验证。MoE to Dense应用很重要的一点是花尽量少的代价将MoE的能力迁移到Dense模型上面，论文中并没有说明第二阶段蒸馏用的计算量，而是从蒸馏后最终效果和传统的蒸馏方法进行对比。
+Experts Weights Averaging: A New General Training Scheme for Vision Transformers Aug 2023, Fudan University
+re-parameterization，即二次参数化方法，是在CV中提出的一种方法，旨在解决多分支类型的网络结构在推理时的低效，比如 ResNet。具有代表性的是RepVGG，在训练的时候使用多分支结构，但是在推理阶段使用卷积核合并得到一个单分支的网络。该方法最重要的是合并后的结构等价性，而MoE的expert并不存在等价的合并方式。
+因此，论文为了解决这个问题，在每次训练后人为的将expert之间的参数距离拉近。方法如下：
+这里的做法可能有一点隐患，因为MoE的训练过程是会导致expert之间的差异越来越大，如果训练中人为对expert之间参数进行了平滑，那么是否同时也降低了MoE能取得的效果呢？
+在训练结束后，通过平均每个 MoE 的专家，将每个 MoE 转换为 FFN，将模型转换回原始 ViT 以进行推理。论文还提供了理论分析，证明了该方法的有效性和通用性，并在各种 2D 和 3D 视觉任务、ViT 架构和数据集上进行了广泛实验。...</p>
+  </div>
+  <footer class="entry-footer"><span title='2024-04-22 23:20:46 +0800 CST'>April 22, 2024</span></footer>
+  <a class="entry-link" aria-label="post link to MoE to Dense介绍以及相关论文速览" href="http://localhost:1313/posts/moe-to-dense-introduce/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Megatron-LM解读：MoE的实现方式
     </h2>
   </header>
   <div class="entry-content">
@@ -171,13 +207,13 @@
 MoE结构回顾 首先，看一下在最主流的transformer框架里，MoE的结构如下图所示：
 %%{ init: { &#39;flowchart&#39;: { &#39;curve&#39;: &#39;bumpX&#39; } } }%% graph LR x[&#34;X(n-1)&#34;] --&gt; p1[&#34;.&#34;] --&gt; input_ln[&#34;Layer Norm&#34;] input_ln --&gt; attn[&#34;Self Attention&#34;] attn --&gt; plus1((&#43;)) p1 --&gt; plus1 plus1 --&gt; p2[&#34;.&#34;] --&gt; attn_ln[&#34;Layer Norm&#34;] subgraph MoE Layer expert1[&#34;Expert 1&#34;] expert2[&#34;Expert 2&#34;] expert_dot[&#34;...&#34;] expertk[&#34;Expert K&#34;] end attn_ln -.-&gt; expert2[&#34;Expert 2&#34;] attn_ln --&gt; expert1[&#34;Expert 1&#34;] attn_ln -....</p>
   </div>
-  <footer class="entry-footer"><span title='2024-03-25 23:40:02 +0800 CST'>March 25, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to Megatron Lm Moe" href="https://dawson-chen.github.io/posts/megatron-lm-moe/"></a>
+  <footer class="entry-footer"><span title='2024-03-19 23:40:02 +0800 CST'>March 19, 2024</span></footer>
+  <a class="entry-link" aria-label="post link to Megatron-LM解读：MoE的实现方式" href="http://localhost:1313/posts/megatron-lm-moe/"></a>
 </article>
 
 <article class="post-entry"> 
   <header class="entry-header">
-    <h2 class="entry-hint-parent">Megatron Lm Pipline
+    <h2 class="entry-hint-parent">Megatron-LM解读：流水线并行原理和代码解读
     </h2>
   </header>
   <div class="entry-content">
@@ -206,13 +242,233 @@ Interleaved 1F1B 我们在与传统流水线的类比中解释过，流水线切
 等待上一个节点的执行结果； 执行当前节点的操作； 将结果传给下一个节点； PP实现的时候，因为每个节点对应了前向后向2条流水线，所以需要4种通讯能力，分别对应了前后2条流水上接受和发送的能力。megatron在实现的时候有一个专门的函数用来实现这种功能，下面是源码：
 def communicate(tensor_send_next, tensor_send_prev, recv_forward, recv_backward): &#34;&#34;&#34;Communicate tensors between stages.&#34;&#34;&#34; args = get_args() # Create placeholder tensors for receive in forward and backward directions # if needed....</p>
   </div>
-  <footer class="entry-footer"><span title='2024-03-25 23:34:01 +0800 CST'>March 25, 2024</span></footer>
-  <a class="entry-link" aria-label="post link to Megatron Lm Pipline" href="https://dawson-chen.github.io/posts/megatron-lm-pipline/"></a>
+  <footer class="entry-footer"><span title='2024-02-05 23:34:01 +0800 CST'>February 5, 2024</span></footer>
+  <a class="entry-link" aria-label="post link to Megatron-LM解读：流水线并行原理和代码解读" href="http://localhost:1313/posts/megatron-lm-pipline/"></a>
 </article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Batch Size杂谈
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>在OpenAI 2018年的一篇论文《An Empirical Model of Large-Batch Training》中就介绍了batch size的选择问题，论文中gradient noise scale作为选择batch size的关键指标。
+简单来说，我们实际中用的SGD产生的loss是真实loss的一种近似，这种近似对应的偏差和我们选择的batch size相关，batch size越大偏差越小。究其本质原因，近似的偏差与批数据的信息有关，当训练loss比较大的时候 可以认为数据中的所有信息都是相关信息，而当loss越来越小，批数据中包含的信息偏差占比会越来越高。
+论文中最大的亮点在于通过严密的推论得出上面的结论，并且推导出固定的模型要达到相同的loss，在不同的batch size下所需训练时长和需要的训练数据量之间的关系，如下所示： $$ (\frac{S}{S_{min}}-1)(\frac{E}{E_{min}}-1)=1 \tag{A1} $$ 其中$E=BS$表示训练使用的数据，通过这个公式，可以得到：
+batch size越大，训练step减小，所需的数据会增加； 训练所需的步数有最小值； 分别解释一下，第一点是因为：当数据中有用信息占比高得时候，小batch size和大batch size得到得梯度方向是差不多的，因此数据的使用率就比较低。第二点，同样是数据的利用效率，如果把batch size很大的情况下，gradient noise已经很小，继续将batch size翻倍得到的收益就很小，所以即使batch size增加到很大，依然需要一定数量的更新步数，也就是$S_{min}$。
+论文中基于gradient noise scale给出一个batch size的经验选择是$B=E_{min}/S_{min}$，在OpenAI Scaling Laws论文中进一步根据经验总结为： $$ B_{crit}\approx \frac{B_}{L^{1/\alpha_B }} \tag{3} $$ 其中，$B_$和$\alpha_B$为经验拟合值，分别约等于$2\times10^8$和$0.21$。
+问题：为什么梯度累积太大会导致loss升高？
+如果batch size远小于$B_{crit}$那么训练的时间会大大增加，但是并不会显著的减小需要的训练量。需要注意的是这里假设了无限的并行条件，当我们在实际中使用梯度累积增大batch size，使得更接近$B_{crit}$​，那么训练总步数会减少，但是总的时间反而会增加。
+下面进行说明，根据公式A1可以得到： $$ E=\frac{E_{min}}{1-\frac{S_{min}}{S}} $$ 意味着，当我通过梯度累积增加batch size，S会减小 但是为了达到同样loss所需的训练数据会增加。而梯度累积并不影响训练速度，过相同的case需要的时间是一样的，也就是需要更多的时间才可以达到同样的loss。
+这个结论也告诉我们，如果只是为了提升训练速度或者提升训练效果，梯度累积并不会有帮助。当然还由其他的影响因素，比如PP并行方式需要大的batch size提升计算效率，或者提升算法训练的稳定性。
+不同batch size下数据的修正 由公式A1得到： $$ D_{min} = \frac{D}{1&#43;\frac{B}{B_{crit}}} $$ 如果2个不同的batch size，达到相同的loss所需数据量的比值为： $$ \frac{D_1}{D_2} = \frac{B_{crit}&#43;B_1}{B_{crit}&#43;B_2} $$ 通过这个修正公式可以看到，如果选择了不正确的batch size，那么会导致实际训练的token的作用并没有最大化。所以，可能会出现实际训练1....</p>
+  </div>
+  <footer class="entry-footer"><span title='2024-01-22 23:36:14 +0800 CST'>January 22, 2024</span></footer>
+  <a class="entry-link" aria-label="post link to Batch Size杂谈" href="http://localhost:1313/posts/batch-size/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Deepspeed-HybridEngine开发指南
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>2023-11-29写； 2023-12-06修改：增加适配模型开发流程说明；增加bug解决记录； Deepspeed-Chat是一个优秀且易用的PPO开源实现，实际在使用时HybridEngine开发是PPO工程相关的重要一环，本次分享的目的：
+了解整体Deepspeed的架构，和代码逻辑； 清楚如何在Deepspeed上进行HE适配相关开发； 主要是对新的模型结构的适配； 先回答为什么需要做适配，因为HE(hybrid engine)本身解决的问题是将训练中的zero3模型，转换成更高效的对设备通讯压力不大的推理模式，可以是不带tp的全参数推理，也可以是带tp的推理。所以不管是哪种形式的推理，都需要重构推理图，并且处理好这种模式转换间设计的大量引用，也是适配需要做的全部事情。虽然我相信这个过程一定可以改成完全自动的形式，但是目前还没有找到这种实现方式。
+然后看一下HE的优势是什么，推理速度不用说，就相当于带或不带zero3的差距，通常10x左右。还有一个优势是带TP的HE方式在内存上的优势，这一点在模型比较大且显存压力较大的场景下尤为重要。下面举ppo的例子，如果训练的sft和actor模型大小是70b，reward和critic是7b，一共4个模型，考虑32张A100-80G的场景：
+ZeRO3训练模型占用显存（每张卡）：
+Actor: (优化器12 &#43; 参数2 &#43; 梯度2) * 70 / 32 = 35G SFT：通常offload，显存可以记作0G reward&#43;critic：3.9G 每张卡总共需要：38.9G
+占用的显存是够的，但是zero3推理速度在ppo生成阶段几乎不可用；
+（HE模式）ZeRO3训练模型&#43;TP推理占用显存（每张卡）：
+TP的size设为8
+训练阶段：TP的参数释放掉，和ZeRO3模式一样，38.9G； 生成阶段：70 * 2 = 140G（全部推理参数），TP参数切片140 / 8 = 17.5G，所以一共需要56.4G； 训练用ZeRO3节约显存，生成用HE提升速度。如果不用TP的HE那么140G放到一张卡上，目前还没有设备能支持。
+1. 整体架构 1.1 启动流程 涉及代码都在deepspeed/launcher目录下面，一共2个文件 runner和launcher。
+1.2 Zero3 zero3架构是什么样的，如何实现？
+https://github.com/microsoft/DeepSpeed/blob/2c2a7f31bcc20ae12ce8d2b8af14448939ebdf12/deepspeed/runtime/zero/stage3.py#L120C9-L120C9
+自动对参数进行all_gather，使用后自动释放；实现核心 ZeROOrderedDict
+1.3 Hybrid Engine 为什么需要HE？
+Zero3是用来训练的并行方式，推理的时候有很大劣势，并且不能扩展到多机的情况。
+HE如何起到作用？实现方式？
+HE内容：1. 自定义算子；2. tensor parallelism；
+不带TP的方式； 适用于 7b、13b 单机多卡 带TP的方式； 适用于66b、70b 更大模型的训练 比如说模型ChatGLM2，它的代码实现里transformer块对应的实现类是 GLMBlock，HE就是实现一个新的推理过程，带或者不带TP区别就是这个推理过程是不是分布式，然后替换掉 GLMBlock的forward方法。...</p>
+  </div>
+  <footer class="entry-footer"><span title='2024-01-07 12:37:45 +0800 CST'>January 7, 2024</span></footer>
+  <a class="entry-link" aria-label="post link to Deepspeed-HybridEngine开发指南" href="http://localhost:1313/posts/deepspeed-hybrid-engine-dev/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Moe的Scaling Law
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>背景 Dense网络的scaling law如下：
+$$ Log\ \mathit{L}(N) \triangleq a\ log \mathit N &#43; d \tag{1} $$
+来自Scaling laws for neural language models
+不同的分词器、模型结构、数据都会影响这2个值，所以需要重新评估。
+MoE的scaling law建模出自论文 Unified Scaling Laws for Routed Language Models, DeepMind, Feb 2022，关键的工作是基于Dense网络的scaling law，并结合MoE的实验特性，设计出新的建模。
+关键假设：MoE模型收敛后（如果没有特殊说明，后续所有的loss都是指收敛后的）的log-loss，是基底参数两log和expert数量log的双线性组合。
+表示公式如下：
+$$ log L(N, E)\triangleq a\ log\ N &#43; b\ log\ \hat{E} &#43; c\ log\ N log \hat{E} &#43; d \tag{2} $$
+$$ where\ \ \ \ \frac{1}{\hat{E}} \triangleq \frac{1}{E-1&#43;(\frac{1}{E_{start}}-\frac{1}{E_{max}})} &#43; \frac{1}{E_{max}} $$
+注意：其中 $log$ 函数使用的基底为10。...</p>
+  </div>
+  <footer class="entry-footer"><span title='2023-12-22 23:39:21 +0800 CST'>December 22, 2023</span></footer>
+  <a class="entry-link" aria-label="post link to Moe的Scaling Law" href="http://localhost:1313/posts/moe-scaling-law/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Moe(Mixtrue of Experts)技术调研
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>陈道一，12/14/2023
+MoE的发明的动机是什么？ MoE提出自hinton 1991年的论文Adaptive mixtures of local experts，主要目的是加快模型训练的速度。因为正常训练过程中，如果使用同一个网络去拟合全部的数据，因为数据是多样性的，所以拟合的过程会比较慢。这时候如果有多个专家网络，每个专家网络只拟合一部分的数据，那么模型整体的学习速度以及泛化的能力都会增强。
+第一次将MoE应用到transformer中的工作是Google 2021年的GShard，并且确定了最近几年MoE工作的主要动机：保持相同训练和推理资源的同时，通过增加模型的体积代价来提升模型学习效果。
+为什么在1991年提出直到最近才重新进入视野？ 1991年还处在BP算法刚刚提出来的阶段，最优的模型也就是多层感知机。当模型本身的容量较低的时候，在复杂的场景下，用一个网络去拟合所有的数据，会因为数据的多样性，所以拟合的过程会比较慢。所以MoE被提出用来增加模型在复杂场景下学习的效果，虽然在LLM时代，只要有足够的算力和数据，模型规模扩大一定能带来更好的效果。但在当时的算力稀缺并且缺少模型scaleup需要的技术时，这种方法还是可以提高参数利用率的。
+而当LLM发展到GPT3的规模，推理和训练对应的优化方法也趋近于完善，继续scale up更多依赖于硬件的提升。那么当算力发展变缓或者获取成本变高的时候，就需要另外一种可以继续scale up但不那么依赖于硬件的方式，MoE开始进入人们的视野。
+MoE为什么会起作用？ scaling law层面的解释
+Scaling laws for neural language models揭示了模型规模、数据大小、以及算力大小之间的规律，并且建议对算力最佳利用方式是：在固定数据集大小下 尽量训练更大规模的模型。这里的规模一般指的是模型参数数量 以及 需要的计算量，参数量增加同时计算量也会增加。
+MoE相当于一次解耦，只增加模型参数数量、同时保持需求计算量相对恒定，所以效果提升符合scaling law的规律。
+典型的MoE在transformer结构中应用如下（switch-transformer, Google, Jul 2022）：
+模型结构层面的猜想
+观察1：FFN可以理解为KV对，K代表了文本模式、V代表了文本分布^[1]^，越靠后的层学习到越复杂的模式。
+观察2：模型越靠后的层学习越不够充分。
+基于这2个观察，可以做出一个假设：学习不充分的原因是容量不够，越靠后的层对容量需求越大。支撑这个假设的一个实验观察是：如果只有一个MoE层，放在越靠后的位置，最终效果越好^[3],[4]^。另外，从直觉上复杂的模式对应的数量是简单模式的指数倍，需要更多的参数去拟合。
+所以MoE通过增加FFN的数量，增加了模型的容量，可以学习到更多的文本模式，所以得到更好的效果。
+[1] Transformer Feed-Forward Layers Are Key-Value Memories [2] Deepspeed-MoE#PR-MoE [3] Hash Layers For Large Sparse Models#Figure 3
+Expert真的是专家吗？ 考虑下面3个MoE路由配置的实验：
+将语义相似的token路由到相同的expert上； 将语义相似的token路由到不同的expert上； 随机将token指定到一个固定的expert上； 如果把expert理解成不同领域的专家，那么应该是1&gt;2&gt;3，但真实的实验结论是2&gt;3»1（23.22&gt;23.27»23.99）。
+对此一个合理的解释是：experts并不是理解中的”领域专家“ 分别学习不同的领域知识，而是增加对相似文本模式之间的区分度；相似的文本模式更可能发生在相似的token上面，所以相似的token应该路由到不同的expert上。
+如何计算训练和推理成本？ 结论1：MoE训练所需的显存与基底模型并没有明显差别；
+以Mixtral-7B*8 MoE为例：
+dim n_layers hidden_dim n_heads n_kv_heads vocab_size num_experts_per_tok num_experts 4096 32 14336 32 8 32000 2 8 整体参数量：46b 活跃参数量：12b 对应基底模型参数量：7....</p>
+  </div>
+  <footer class="entry-footer"><span title='2023-12-20 23:40:17 +0800 CST'>December 20, 2023</span></footer>
+  <a class="entry-link" aria-label="post link to Moe(Mixtrue of Experts)技术调研" href="http://localhost:1313/posts/moe-introduce/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">PPO实践经验
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>PPO的过程就像所有的强化学习一样，从原始的采样分布出发，不断循环3个步骤：采样、奖励、优化（policy gradient）。结合提前训练好的人类偏好模型得到奖励信号，从而实现与人类偏好对齐的目的。
+ppo算法提出是在2017年，应用在语言模型上的相关工作最早发表于2019、2020年（Fine-Tuning Language Models from Human Preferences，Learning to summarize with human feedback），并且后续相关的多个开源代码并未有大改动。然而后来者仍然在使用ppo实现对齐偏好的效果上挣扎，由此可以猜测该技术的应用难度要高于技术难度，而公开的论文中只给出一些实验性质的浅层说明，真正的核心隐藏在只言片语中，需要后来者结合实践慢慢发掘。因此本文尝试将实践中获取到的一些认知记录下来，给后续的技术应用作为参考。
+PPO训练的条件 从ppo的流程来看，一共分为3个阶段：采样、奖励、优化。优化阶段主要是算法的事情，比如说一些trick和参数调整，在个别任务中可能参数调节非常的敏感，但总的来看一个稳定的版本在大多数情况下是够用的。这些trick和参数在开源的工作中都可以见多，基本上都是大同小异。反而是在ppo看来2个固定的环节：采样和奖励，对最终的效果影响最大。采样的模型来自于sft的训练结果，奖励来自于训练好的偏好模型，前者决定了ppo的理论上限，后者决定了ppo的实际训练上限。
+总的来说，想要通过ppo提升模型的能力，需要保证2个条件：
+足够的采样空间； 考虑一个极端的情况，如果每次采样的结果相差都不大，那么很快critic-actor会收敛到稳态（critic预测的value接近真实的q-value，advantage接近于0，actor loss接近于0）； 如果把ppo理解成在sft的采样空间里做熵减，那么采样空间的范围就决定了ppo可以达到的上限； 另外，如果sft的熵足够低，那么意味着采样会非常集中，从效率的角度其实是不利于强化学习训练的，因为agent探索的效率很低，导致模型难以收敛。 在采样空间上保证一定的准确率； ppo根据奖励和KL散度惩罚来调整对应生成字符的概率分布，所以准确率很重要； reward model的泛化性很重要，因为随着ppo的训练，采样分布一直在变； KL惩罚因子一定程度上保证了rm在采样空间上的准确率。 SFT采样空间衡量 因为ppo是从sft开始训练的，并且其过程依赖于采样的多样性，所以衡量采样空间的大小能从感官上预测ppo模型的训练效果。
+实践中可用的指标包括以下5个：
+entropy of next token probability; 下一个字符概率分布的熵 distribution of reward score; 采样分布上奖励值的分布 maximum next token probability; 下一个字符的最大概率值 sampled token probability; 采样token的概率值 number of possible token; 可采样token的数量 正则化reward score
+上图中记录了一次ppo训练过程中的多个reward score分布，几乎看不到有任何的变化。
+因为reward score分布其实是2个变量的叠加分布，即：不同case上得到的reward score的分布 &#43; 同一case上生成不同case的reward分布。我们希望用同一case上生成不同case的reward分布来反应采样空间的大小，所以采用以下正则方法。
+正则方法：reward norm = reward - mean reward from same prompt &#43; global mean reward...</p>
+  </div>
+  <footer class="entry-footer"><span title='2023-11-14 21:41:46 +0800 CST'>November 14, 2023</span></footer>
+  <a class="entry-link" aria-label="post link to PPO实践经验" href="http://localhost:1313/posts/ppo-practice/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Rope背后的数学想象力
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>Polya said it well: “When you have satisfied yourself that the theorem is true, you start proving it.”
+开头的话意思是，“当你坚信一个理论是正确的时候，再开始尝试证明它“。这句话里隐藏了一个很重要的观点，数学理论在很多时候的作用是去证明你已有的想法，而不是通过理论推导获取到新的想法。
+今天我们要说的旋转位置编码（RoPE, Rotary Position Embedding），以及它的前导工作复数位置编码（Complex Position Embedding），或许就是这种观点的2个实践例子。如果你首先看到的是它们发表出来的数学公式，你可能会没有耐心看完，所幸它们的代码实现并不难，就算弄清楚它们的原理对实际使用并没有什么帮助。但可惜的是，你也会失去了2次为精妙的idea拍手称赞的机会。
+RoPE包括复数位置编码，这2者背后的想法都是非常简单且直观的，但是它们相关的理论推导又是平凡且枯燥的。这也正是数学的奇妙之处，论抽象，没有什么事物能比得过它。但学习数学的精髓，就是掌握它的这种抽象，如果数学只是死记硬背的公式，不好意思，它并不是什么神秘的咒语，不会给你带来一丝丝魔力。所以我们今天用简单的语言说明一下它们背后的观点。
+什么是复数 因为这2个工作都是建立在复数理论之上，所以我们要耐着性子看一下复数的本质。还好，虽然复数的名字是“复杂的数（Complex number）”，但它的本质是将事情变得简单，不得不说是一次起名上的重大失误。
+在有理数还只有正数的年代（1700s），人们并不会理解负数有什么实际意义。今天人们对复数也有着同样的误会，它的本质是旋转。试想有一个有理数的数轴上，1乘以-1表示在数轴上逆时针翻转180°，那么有没有一个数能让$1\times x \times x=-1$，即施加2次使得1进行翻转呢，那就是逆时针翻转90°，这就是$i$的直观理解。
+顺着这个想法，正常的指数增长是指固定增长率下的持续增长，那么复指数表示固定速率下的持续旋转。欧拉公式$e^{i\pi}=-1$表示将一个数持续旋转弧度$\pi$的情况下，它将指向相反的方向。
+在物理中复指数还用来表示正弦信号，因为正弦信号的来源也是旋转运动。
+复数位置编码 不同于RNN、CNN等模型，对于Transformer模型来说，位置编码的加入是必不可少的，因为纯粹的Attention模块是无法捕捉输入顺序的，即无法区分不同位置的Token。为此我们大体有两个选择：1、想办法将位置信息融入到输入中，这构成了绝对位置编码的一般做法；2、想办法微调一下Attention结构，使得它有能力分辨不同位置的Token，这构成了相对位置编码的一般做法。
+来自 让研究人员绞尽脑汁的Transformer位置编码 - 科学空间|Scientific Spaces (kexue.fm)
+以上内容概括了位置编码的作用，以及2大类：绝对位置编码、相对位置编码。但是总体来说都是在一个框架里，即将绝对位置或者相对位置当做一个token，对应1个固定的多维向量，即位置编码。
+复数位置编码使用了一种巧妙的视角将文字编码和位置编码融为一体，即将文字向量的每一个维度看成1个正弦信号，所以每个文字的embedding就是由N个幅度、初始相位、频率各不相同的信号组成，信号的横轴就是文字所处的位置编号。虽然单一的正弦信号是有周期的，但是N个正弦信号的组合可以使公共周期变得非常大，也就是这种信号可以表示非常长的距离信息。
+用信号集合表示位置编码还有2个显而易见的好处：
+位置无关的平移特性：任意2个位置之间的转换，即每个信号以各自的速率转动相同的时间，这个转换本身与文字当前所处的位置无关； 有界性：正弦信号是上下界的，这点对网络的训练稳定至关重要。 需要说明的是，把信号当做复数位置编码的背后逻辑是我个人的理解，原论文中只有数据理论与证明。
+旋转位置编码 “两个二维向量的内积，等于把它们当复数看时，一个复数与另一个复数的共轭的乘积实部。”
+来自 让研究人员绞尽脑汁的Transformer位置编码 - 科学空间|Scientific Spaces (kexue.fm)
+旋转位置编码的理解需要基于一个抽象：如果将二维向量看做复数，那么向量内积相当于一个复数的角度减去另一个复数的角度，并将它们的模相乘。
+上述抽象基于2个事实：
+复数相乘的含义：1. 模相乘；2. 角度相加； 复数的共轭：指模相同，但是角度相反的复数。 这2个向量在Attention计算中分别代表了Q和K，首先在内积之前对这2个向量进行旋转，旋转角度大小与位置成正比关系。那么在做self-attention的时候，基于前面所说的抽象本质，内积的信息里面包含了Q和K的旋转角度之差，这个差是只依赖于位置差的，所以满足位置无关的平移特性。
+那么在多维的情况下，可以把embedding看作多组复数的组合，这种类比依然适用。
+总结 虽然不能说RoPE是从复数位置编码衍生出来的，因为设置更加巧妙更加简洁，但是这种近乎于直觉的想象力&#43;严密的推理 似乎是它们共同的风格。
+数学一定要有直观的意义吗，我认为是的。虽然并不是所有的数学发现都是从实际出发而得来的，但是最终它们一定会用来解决实际的问题。如果没有了这种直观的想象力，那么仅仅从公式推理去做研究，就如同水木失去本源难以发展，又如空中楼阁难以稳固。</p>
+  </div>
+  <footer class="entry-footer"><span title='2023-08-06 23:57:25 +0800 CST'>August 6, 2023</span></footer>
+  <a class="entry-link" aria-label="post link to Rope背后的数学想象力" href="http://localhost:1313/posts/rope-mechanism/"></a>
+</article>
+
+<article class="post-entry"> 
+  <header class="entry-header">
+    <h2 class="entry-hint-parent">Deepspeed原理（手写笔记）
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="20" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h2>
+  </header>
+  <div class="entry-content">
+    <p>前言 介绍了一下DeepSpeed的架构，以及部分重点内容的原理。
+其实是看DeepSpeed源码时候随便写的一段笔记，没时间整理并且写的很潦草，所以不太想发，但是框架的代码读起来不容易，里面知识点确实花了一些时间才弄明白。
+另外，也看到DeepSpeed框架在工作中使用越来越多，所以发出来给想要了解DeepSpeed原理的人一个参考，欢迎批评指正，献丑了。
+正文 </p>
+  </div>
+  <footer class="entry-footer"><span title='2023-07-05 23:42:36 +0800 CST'>July 5, 2023</span></footer>
+  <a class="entry-link" aria-label="post link to Deepspeed原理（手写笔记）" href="http://localhost:1313/posts/deepspeed-drafts/"></a>
+</article>
+<footer class="page-footer">
+  <nav class="pagination">
+    <a class="next" href="http://localhost:1313/page/2/">Next&nbsp;&nbsp;»
+    </a>
+  </nav>
+</footer>
     </main>
     
 <footer class="footer">
-    <span>&copy; 2024 <a href="https://dawson-chen.github.io/">DawsonChen&#39;s Blog</a></span>
+    <span>&copy; 2024 <a href="http://localhost:1313/">DawsonChen&#39;s Blog</a></span>
     <span>
         Powered by
         <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &

@@ -1,7 +1,8 @@
 +++
-title = 'Megatron Lm Pipline'
-date = 2024-03-25T23:34:01+08:00
+title = 'Megatron-LM解读：流水线并行原理和代码解读'
+date = 2024-02-05T23:34:01+08:00
 draft = false
+math = true
 +++
 
 

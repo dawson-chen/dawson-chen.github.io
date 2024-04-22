@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Rope背后的数学想象力 | DawsonChen&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="Polya said it well: “When you have satisfied yourself that the theorem is true, you start proving it.”
+开头的话意思是，“当你坚信一个理论是正确的时候，再开始尝试证明它“。这句话里隐藏了一个很重要的观点，数学理论在很多时候的作用是去证明你已有的想法，而不是通过理论推导获取到新的想法。
+今天我们要说的旋转位置编码（RoPE, Rotary Position Embedding），以及它的前导工作复数位置编码（Complex Position Embedding），或许就是这种观点的2个实践例子。如果你首先看到的是它们发表出来的数学公式，你可能会没有耐心看完，所幸它们的代码实现并不难，就算弄清楚它们的原理对实际使用并没有什么帮助。但可惜的是，你也会失去了2次为精妙的idea拍手称赞的机会。
+RoPE包括复数位置编码，这2者背后的想法都是非常简单且直观的，但是它们相关的理论推导又是平凡且枯燥的。这也正是数学的奇妙之处，论抽象，没有什么事物能比得过它。但学习数学的精髓，就是掌握它的这种抽象，如果数学只是死记硬背的公式，不好意思，它并不是什么神秘的咒语，不会给你带来一丝丝魔力。所以我们今天用简单的语言说明一下它们背后的观点。
+什么是复数 因为这2个工作都是建立在复数理论之上，所以我们要耐着性子看一下复数的本质。还好，虽然复数的名字是“复杂的数（Complex number）”，但它的本质是将事情变得简单，不得不说是一次起名上的重大失误。
+在有理数还只有正数的年代（1700s），人们并不会理解负数有什么实际意义。今天人们对复数也有着同样的误会，它的本质是旋转。试想有一个有理数的数轴上，1乘以-1表示在数轴上逆时针翻转180°，那么有没有一个数能让$1\times x \times x=-1$，即施加2次使得1进行翻转呢，那就是逆时针翻转90°，这就是$i$的直观理解。
+顺着这个想法，正常的指数增长是指固定增长率下的持续增长，那么复指数表示固定速率下的持续旋转。欧拉公式$e^{i\pi}=-1$表示将一个数持续旋转弧度$\pi$的情况下，它将指向相反的方向。
+在物理中复指数还用来表示正弦信号，因为正弦信号的来源也是旋转运动。
+复数位置编码 不同于RNN、CNN等模型，对于Transformer模型来说，位置编码的加入是必不可少的，因为纯粹的Attention模块是无法捕捉输入顺序的，即无法区分不同位置的Token。为此我们大体有两个选择：1、想办法将位置信息融入到输入中，这构成了绝对位置编码的一般做法；2、想办法微调一下Attention结构，使得它有能力分辨不同位置的Token，这构成了相对位置编码的一般做法。
+来自 让研究人员绞尽脑汁的Transformer位置编码 - 科学空间|Scientific Spaces (kexue.fm)
+以上内容概括了位置编码的作用，以及2大类：绝对位置编码、相对位置编码。但是总体来说都是在一个框架里，即将绝对位置或者相对位置当做一个token，对应1个固定的多维向量，即位置编码。
+复数位置编码使用了一种巧妙的视角将文字编码和位置编码融为一体，即将文字向量的每一个维度看成1个正弦信号，所以每个文字的embedding就是由N个幅度、初始相位、频率各不相同的信号组成，信号的横轴就是文字所处的位置编号。虽然单一的正弦信号是有周期的，但是N个正弦信号的组合可以使公共周期变得非常大，也就是这种信号可以表示非常长的距离信息。
+用信号集合表示位置编码还有2个显而易见的好处：
+位置无关的平移特性：任意2个位置之间的转换，即每个信号以各自的速率转动相同的时间，这个转换本身与文字当前所处的位置无关； 有界性：正弦信号是上下界的，这点对网络的训练稳定至关重要。 需要说明的是，把信号当做复数位置编码的背后逻辑是我个人的理解，原论文中只有数据理论与证明。
+旋转位置编码 “两个二维向量的内积，等于把它们当复数看时，一个复数与另一个复数的共轭的乘积实部。”
+来自 让研究人员绞尽脑汁的Transformer位置编码 - 科学空间|Scientific Spaces (kexue.fm)
+旋转位置编码的理解需要基于一个抽象：如果将二维向量看做复数，那么向量内积相当于一个复数的角度减去另一个复数的角度，并将它们的模相乘。
+上述抽象基于2个事实：
+复数相乘的含义：1. 模相乘；2. 角度相加； 复数的共轭：指模相同，但是角度相反的复数。 这2个向量在Attention计算中分别代表了Q和K，首先在内积之前对这2个向量进行旋转，旋转角度大小与位置成正比关系。那么在做self-attention的时候，基于前面所说的抽象本质，内积的信息里面包含了Q和K的旋转角度之差，这个差是只依赖于位置差的，所以满足位置无关的平移特性。
+那么在多维的情况下，可以把embedding看作多组复数的组合，这种类比依然适用。
+总结 虽然不能说RoPE是从复数位置编码衍生出来的，因为设置更加巧妙更加简洁，但是这种近乎于直觉的想象力&#43;严密的推理 似乎是它们共同的风格。
+数学一定要有直观的意义吗，我认为是的。虽然并不是所有的数学发现都是从实际出发而得来的，但是最终它们一定会用来解决实际的问题。如果没有了这种直观的想象力，那么仅仅从公式推理去做研究，就如同水木失去本源难以发展，又如空中楼阁难以稳固。">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/rope-mechanism/">
+<meta name="google-site-verification" content="XYZabc">
+<meta name="yandex-verification" content="XYZabc">
+<meta name="msvalidate.01" content="XYZabc">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/rope-mechanism/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.css"
+    integrity="sha384-bYdxxUwYipFNohQlHt0bjN/LCpueqWz13HufFEV1SUatKs1cm4L6fFgCi1jT643X" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.js"
+    integrity="sha384-Qsn9KnoKISj6dI8g7p1HBlNpVx0I8p1SvlwOldgi3IorMle61nQy4zEahWYtljaz"
+    crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/contrib/auto-render.min.js"
+    integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+    crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+            
+            
+            delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '$', right: '$', display: false },
+                { left: '\\(', right: '\\)', display: false },
+                { left: '\\[', right: '\\]', display: true }
+            ],
+            
+            throwOnError: false
+        });
+    });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+
+const config = {
+    startOnLoad:true,
+    theme: 'forest',
+    themeVariables: {
+        lineColor: "#fafafa"    
+    },
+    flowchart: {
+        useMaxWidth:false,
+        htmlLabels:true
+        }
+};
+mermaid.initialize(config);
+
+
+window.onload = () => {
+    window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="DawsonChen&#39;s Blog (Alt + H)">DawsonChen&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Rope背后的数学想象力
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h1>
+    <div class="post-meta"><span title='2023-08-06 23:57:25 +0800 CST'>August 6, 2023</span>&nbsp;|&nbsp;<a href="https://github.com/%3cpath_to_repo%3e/content/posts/rope-mechanism.md" rel="noopener noreferrer" target="_blank">Suggest Changes</a>
+
+</div>
+  </header> 
+  <div class="post-content"><blockquote>
+<p>Polya said it well: “When you have satisfied yourself that the theorem is true, you start proving it.”</p>
+</blockquote>
+<p>开头的话意思是，“当你坚信一个理论是正确的时候，再开始尝试证明它“。这句话里隐藏了一个很重要的观点，数学理论在很多时候的作用是去证明你已有的想法，而不是通过理论推导获取到新的想法。</p>
+<p>今天我们要说的旋转位置编码（RoPE, Rotary Position Embedding），以及它的前导工作复数位置编码（Complex Position Embedding），或许就是这种观点的2个实践例子。如果你首先看到的是它们发表出来的数学公式，你可能会没有耐心看完，所幸它们的代码实现并不难，就算弄清楚它们的原理对实际使用并没有什么帮助。但可惜的是，你也会失去了2次为精妙的idea拍手称赞的机会。</p>
+<p>RoPE包括复数位置编码，这2者背后的想法都是非常简单且直观的，但是它们相关的理论推导又是平凡且枯燥的。这也正是数学的奇妙之处，论抽象，没有什么事物能比得过它。但学习数学的精髓，就是掌握它的这种抽象，如果数学只是死记硬背的公式，不好意思，它并不是什么神秘的咒语，不会给你带来一丝丝魔力。所以我们今天用简单的语言说明一下它们背后的观点。</p>
+<h2 id="什么是复数">什么是复数<a hidden class="anchor" aria-hidden="true" href="#什么是复数">#</a></h2>
+<p>因为这2个工作都是建立在复数理论之上，所以我们要耐着性子看一下复数的本质。还好，虽然复数的名字是“复杂的数（Complex number）”，但它的本质是将事情变得简单，不得不说是一次起名上的重大失误。</p>
+<p>在有理数还只有正数的年代（1700s），人们并不会理解负数有什么实际意义。今天人们对复数也有着同样的误会，它的本质是旋转。试想有一个有理数的数轴上，1乘以-1表示在数轴上逆时针翻转180°，那么有没有一个数能让$1\times x \times x=-1$，即施加2次使得1进行翻转呢，那就是逆时针翻转90°，这就是$i$的直观理解。</p>
+<p><img loading="lazy" src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/462663ca61004240af1ff17de06782a1~tplv-k3u1fbpfcp-watermark.image?" alt="image.png"  />
+
+顺着这个想法，正常的指数增长是指固定增长率下的持续增长，那么复指数表示固定速率下的持续旋转。欧拉公式$e^{i\pi}=-1$表示将一个数持续旋转弧度$\pi$的情况下，它将指向相反的方向。</p>
+<p>在物理中复指数还用来表示正弦信号，因为正弦信号的来源也是旋转运动。</p>
+<h2 id="复数位置编码">复数位置编码<a hidden class="anchor" aria-hidden="true" href="#复数位置编码">#</a></h2>
+<blockquote>
+<p>不同于RNN、CNN等模型，对于Transformer模型来说，位置编码的加入是必不可少的，因为纯粹的Attention模块是无法捕捉输入顺序的，即无法区分不同位置的Token。为此我们大体有两个选择：1、想办法将位置信息融入到输入中，这构成了绝对位置编码的一般做法；2、想办法微调一下Attention结构，使得它有能力分辨不同位置的Token，这构成了相对位置编码的一般做法。</p>
+<p>来自 <a href="https://kexue.fm/archives/8130">让研究人员绞尽脑汁的Transformer位置编码 - 科学空间|Scientific Spaces (kexue.fm)</a></p>
+</blockquote>
+<p>以上内容概括了位置编码的作用，以及2大类：绝对位置编码、相对位置编码。但是总体来说都是在一个框架里，即将绝对位置或者相对位置当做一个token，对应1个固定的多维向量，即位置编码。</p>
+<p>复数位置编码使用了一种巧妙的视角将文字编码和位置编码融为一体，即将文字向量的每一个维度看成1个正弦信号，所以每个文字的embedding就是由N个幅度、初始相位、频率各不相同的信号组成，信号的横轴就是文字所处的位置编号。虽然单一的正弦信号是有周期的，但是N个正弦信号的组合可以使公共周期变得非常大，也就是这种信号可以表示非常长的距离信息。</p>
+<p>用信号集合表示位置编码还有2个显而易见的好处：</p>
+<ul>
+<li>位置无关的平移特性：任意2个位置之间的转换，即每个信号以各自的速率转动相同的时间，这个转换本身与文字当前所处的位置无关；</li>
+<li>有界性：正弦信号是上下界的，这点对网络的训练稳定至关重要。</li>
+</ul>
+<p>需要说明的是，把信号当做复数位置编码的背后逻辑是我个人的理解，原论文中只有数据理论与证明。</p>
+<h2 id="旋转位置编码">旋转位置编码<a hidden class="anchor" aria-hidden="true" href="#旋转位置编码">#</a></h2>
+<blockquote>
+<p>“两个二维向量的内积，等于把它们当复数看时，一个复数与另一个复数的共轭的乘积实部。”</p>
+<p>来自 <a href="https://kexue.fm/archives/8130">让研究人员绞尽脑汁的Transformer位置编码 - 科学空间|Scientific Spaces (kexue.fm)</a></p>
+</blockquote>
+<p>旋转位置编码的理解需要基于一个抽象：如果将二维向量看做复数，那么向量内积相当于一个复数的角度减去另一个复数的角度，并将它们的模相乘。</p>
+<p>上述抽象基于2个事实：</p>
+<ul>
+<li>复数相乘的含义：1. 模相乘；2. 角度相加；</li>
+<li>复数的共轭：指模相同，但是角度相反的复数。</li>
+</ul>
+<p>这2个向量在Attention计算中分别代表了Q和K，首先在内积之前对这2个向量进行旋转，旋转角度大小与位置成正比关系。那么在做self-attention的时候，基于前面所说的抽象本质，内积的信息里面包含了Q和K的旋转角度之差，这个差是只依赖于位置差的，所以满足位置无关的平移特性。</p>
+<p>那么在多维的情况下，可以把embedding看作多组复数的组合，这种类比依然适用。</p>
+<h2 id="总结">总结<a hidden class="anchor" aria-hidden="true" href="#总结">#</a></h2>
+<p>虽然不能说RoPE是从复数位置编码衍生出来的，因为设置更加巧妙更加简洁，但是这种近乎于直觉的想象力+严密的推理 似乎是它们共同的风格。</p>
+<p>数学一定要有直观的意义吗，我认为是的。虽然并不是所有的数学发现都是从实际出发而得来的，但是最终它们一定会用来解决实际的问题。如果没有了这种直观的想象力，那么仅仅从公式推理去做研究，就如同水木失去本源难以发展，又如空中楼阁难以稳固。</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2024 <a href="http://localhost:1313/">DawsonChen&#39;s Blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

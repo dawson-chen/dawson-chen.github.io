@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Moe的Scaling Law | DawsonChen&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="背景 Dense网络的scaling law如下：
+$$ Log\ \mathit{L}(N) \triangleq a\ log \mathit N &#43; d \tag{1} $$
+来自Scaling laws for neural language models
+不同的分词器、模型结构、数据都会影响这2个值，所以需要重新评估。
+MoE的scaling law建模出自论文 Unified Scaling Laws for Routed Language Models, DeepMind, Feb 2022，关键的工作是基于Dense网络的scaling law，并结合MoE的实验特性，设计出新的建模。
+关键假设：MoE模型收敛后（如果没有特殊说明，后续所有的loss都是指收敛后的）的log-loss，是基底参数两log和expert数量log的双线性组合。
+表示公式如下：
+$$ log L(N, E)\triangleq a\ log\ N &#43; b\ log\ \hat{E} &#43; c\ log\ N log \hat{E} &#43; d \tag{2} $$
+$$ where\ \ \ \ \frac{1}{\hat{E}} \triangleq \frac{1}{E-1&#43;(\frac{1}{E_{start}}-\frac{1}{E_{max}})} &#43; \frac{1}{E_{max}} $$
+注意：其中 $log$ 函数使用的基底为10。">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/moe-scaling-law/">
+<meta name="google-site-verification" content="XYZabc">
+<meta name="yandex-verification" content="XYZabc">
+<meta name="msvalidate.01" content="XYZabc">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/moe-scaling-law/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.css"
+    integrity="sha384-bYdxxUwYipFNohQlHt0bjN/LCpueqWz13HufFEV1SUatKs1cm4L6fFgCi1jT643X" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.js"
+    integrity="sha384-Qsn9KnoKISj6dI8g7p1HBlNpVx0I8p1SvlwOldgi3IorMle61nQy4zEahWYtljaz"
+    crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/contrib/auto-render.min.js"
+    integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+    crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+            
+            
+            delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '$', right: '$', display: false },
+                { left: '\\(', right: '\\)', display: false },
+                { left: '\\[', right: '\\]', display: true }
+            ],
+            
+            throwOnError: false
+        });
+    });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+
+const config = {
+    startOnLoad:true,
+    theme: 'forest',
+    themeVariables: {
+        lineColor: "#fafafa"    
+    },
+    flowchart: {
+        useMaxWidth:false,
+        htmlLabels:true
+        }
+};
+mermaid.initialize(config);
+
+
+window.onload = () => {
+    window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="DawsonChen&#39;s Blog (Alt + H)">DawsonChen&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      Moe的Scaling Law
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h1>
+    <div class="post-meta"><span title='2023-12-22 23:39:21 +0800 CST'>December 22, 2023</span>&nbsp;|&nbsp;<a href="https://github.com/%3cpath_to_repo%3e/content/posts/moe-scaling-law.md" rel="noopener noreferrer" target="_blank">Suggest Changes</a>
+
+</div>
+  </header> 
+  <div class="post-content"><h2 id="背景">背景<a hidden class="anchor" aria-hidden="true" href="#背景">#</a></h2>
+<blockquote>
+<p>Dense网络的scaling law如下：</p>
+<p>$$
+Log\ \mathit{L}(N) \triangleq a\ log \mathit N + d \tag{1}
+$$</p>
+<p><em>来自Scaling laws for neural language models</em></p>
+<p>不同的分词器、模型结构、数据都会影响这2个值，所以需要重新评估。</p>
+</blockquote>
+<p>MoE的scaling law建模出自论文 <em><a href="http://arxiv.org/abs/2202.01169">Unified Scaling Laws for Routed Language Models</a>, DeepMind, Feb 2022</em>，关键的工作是基于Dense网络的scaling law，并结合MoE的实验特性，设计出新的建模。</p>
+<p><strong>关键假设</strong>：MoE模型收敛后（如果没有特殊说明，后续所有的loss都是指收敛后的）的log-loss，是基底参数两log和expert数量log的双线性组合。</p>
+<p>表示公式如下：</p>
+<p>$$
+log L(N, E)\triangleq a\ log\ N + b\ log\ \hat{E} + c\ log\ N log \hat{E} + d \tag{2}
+$$</p>
+<p>$$
+where\ \ \ \ \frac{1}{\hat{E}} \triangleq \frac{1}{E-1+(\frac{1}{E_{start}}-\frac{1}{E_{max}})} + \frac{1}{E_{max}}
+$$</p>
+<blockquote>
+<p>注意：其中 $log$ 函数使用的基底为10。</p>
+</blockquote>
+<p>解释一下其中使用到的变量：</p>
+<ul>
+<li>$E$ 表示expert的数量，$\hat{E}$ 表示饱和化的 $E$，用来衡量expert数量变大后效果变差的衰减；</li>
+<li>$N$ 表示对应基底模型的参数量；</li>
+<li>$a,b,c,d,E_{start},E_{max}$ 为待拟合的参数；</li>
+</ul>
+<h2 id="建模方式的演进">建模方式的演进<a hidden class="anchor" aria-hidden="true" href="#建模方式的演进">#</a></h2>
+<p>下面介绍如何从公式(1)一步步到公式(2)的，以及对应的逻辑。</p>
+<h3 id="理论推导部分">理论推导部分<a hidden class="anchor" aria-hidden="true" href="#理论推导部分">#</a></h3>
+<ol>
+<li>
+<p>如果给定$N$，那么$E$一定程度上与整体参数量成正比；</p>
+<p>很容易想到</p>
+<p>$$
+log\ L_N(E)\triangleq b\ log\ E + d&rsquo; \tag{3}
+$$</p>
+</li>
+<li>
+<p>$E=1$的时候代表了Dense网络的情况；</p>
+<p>带入公式3得到了$log\ L_N(E)= d&rsquo;$，所以有$d&rsquo;=a\ log \mathit N + d$；</p>
+<p>由此可以得到公式1和公式3的结合：</p>
+<p>$$
+log\ L(N,E)\triangleq a\ log\ N + b\ log\ E + d \tag{4}
+$$</p>
+</li>
+</ol>
+<p>到这一步，<em>基于推论的建模就到头了，后续改动都是通过实验观察得到的</em>。</p>
+<h3 id="实验修正部分">实验修正部分<a hidden class="anchor" aria-hidden="true" href="#实验修正部分">#</a></h3>
+<p><strong>观察1</strong>：公式4在拟合过程中，$b$会随着模型参数增大而增大。</p>
+<p>反映了基底模型越大的时候，expert增加带来收益的下降趋势。而在公式4中，$log N$对应的斜率是固定的$a$，因此存在误差。</p>
+<p>实验中发现斜率变化与$log\ N$大概成正比，如下图：</p>
+<p><img loading="lazy" src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/82e375f3d4d0464580f46a83fee8cb55~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1538&amp;h=370&amp;s=41068&amp;e=png&amp;b=fefefe" alt="image.png"  />
+</p>
+<p>所以增加一项$log\ N$与$log\ E$的交叉特征，得到公式5。</p>
+<p>$$
+log\ L(N,E)\triangleq a\ log\ N + b\ log\ E + c\ log\ N\ log\ E + d \tag{5}
+$$</p>
+<p>此时$log\ E$对应的斜率为$b+c\ log\ N$，如果c为正数那么$N$增大会让斜率增大，既log-loss下降的速度降低。所以<strong>一个好的MoE的方法应该让$c$尽量接近于0</strong>。</p>
+<p><strong>观察2</strong>：因为MoE方法中的特性，$E$过大和过小都会影响模型的效果；</p>
+<p>比如：</p>
+<ul>
+<li>如果E多大的时候，会遇到gradient方差变大的情况（expert之间差异比较大），从而降低模型效果；</li>
+<li>如果E特别小的时候，固定的负担（指负载平衡loss）的影响会更明显，可能影响模型效果；</li>
+</ul>
+<p>因此对$E$进行饱和化处理，公式为</p>
+<p>$$
+\frac{1}{\hat{E}} \triangleq \frac{1}{E-1+(\frac{1}{E_{start}}-\frac{1}{E_{max}})} + \frac{1}{E_{max}}
+$$</p>
+<p>主要特性是$E\to1, \hat{E}\to E_{start}$，$E\to \infty, \hat{E}\to E_{max}$。</p>
+<p>取，画出$E$从1到512过程中$\hat{E}$的变化，可以看到当$E$增大的时候，$\hat{E}$增加变缓 代表了增大expert数量带来的收益逐渐降低。因此，在实际使用MoE时，尽量设置不超过128的expert数量。</p>
+<p><img loading="lazy" src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f767228a691246a1ba332ed9209b5ff5~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1570&amp;h=658&amp;s=94196&amp;e=png&amp;b=fefefe" alt="image.png"  />
+</p>
+<p>至此，得到最终的scaling law建模，即公式(1)。另外，因为我们的实验以及场景都是在小于128的场景下进行的，所以饱和化带来的收益比较小，<strong>因此，可以沿用论文中的$E_{max}$和$E_{start}$设置，所需需要拟合的参数只有$a,b,c,d$ 这4个</strong>。</p>
+<p>论文中最终拟合的参数如下：</p>
+<p><img loading="lazy" src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d43dfe3a849a4d0e9b0919453cc85b3f~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1556&amp;h=314&amp;s=56976&amp;e=png&amp;b=ffffff" alt="image.png"  />
+</p>
+<h2 id="等价有效参数">等价有效参数<a hidden class="anchor" aria-hidden="true" href="#等价有效参数">#</a></h2>
+<p>通过最终拟合的scaling law，可以计算出MoE设定下对应相同效果的Dense模型参数。</p>
+<p>计算过程很简单，解方程：$L(\bar{N}, 1)=L(N, E)$。</p>
+<p>得到解：</p>
+<p>$$
+\bar N \triangleq (N)^{\alpha(\hat{E})/\alpha(E_{start})} (\hat{E}/E_{start})^{b/\alpha{E_{start}}}
+$$</p>
+<p>显而易见，EPC可以带入Dense网络的scaling law计算。</p>
+<p>EPC计算代码如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-python" data-lang="python"><span class="line"><span class="cl"><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># compute EPC有效参数</span>
+</span></span><span class="line"><span class="cl"><span class="n">E</span> <span class="o">=</span> <span class="mi">16</span> <span class="c1"># Number of Experts</span>
+</span></span><span class="line"><span class="cl"><span class="n">N</span> <span class="o">=</span> <span class="mi">7_241_728_000</span> <span class="c1"># Parameter Count in Base Model</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">def</span> <span class="nf">compute_EPC_by_law</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">E</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">    <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.082</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.108</span><span class="p">,</span> <span class="mf">0.009</span><span class="p">,</span> <span class="mf">1.104</span>
+</span></span><span class="line"><span class="cl">    <span class="n">e_start</span><span class="p">,</span> <span class="n">e_max</span> <span class="o">=</span> <span class="mf">1.847</span><span class="p">,</span> <span class="mf">314.478</span>
+</span></span><span class="line"><span class="cl">    <span class="n">log</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span>
+</span></span><span class="line"><span class="cl">    <span class="k">def</span> <span class="nf">alpha</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">c</span> <span class="o">*</span> <span class="n">log</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">E_saturating</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">E</span><span class="o">-</span><span class="mi">1</span><span class="o">+</span><span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">e_start</span><span class="o">-</span><span class="mi">1</span><span class="o">/</span><span class="n">e_max</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">e_max</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">factor1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">alpha</span><span class="p">(</span><span class="n">E_saturating</span><span class="p">)</span> <span class="o">/</span> <span class="n">alpha</span><span class="p">(</span><span class="n">e_start</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">    <span class="n">factor2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">E_saturating</span> <span class="o">/</span> <span class="n">e_start</span><span class="p">,</span> <span class="n">b</span> <span class="o">/</span> <span class="n">alpha</span><span class="p">(</span><span class="n">e_start</span><span class="p">)</span> <span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">factor1</span> <span class="o">*</span> <span class="n">factor2</span> 
+</span></span></code></pre></div><p>通过这个公式可以计算得到一系列MoE模型设定下对应的Dense网络表，如下：</p>
+<table>
+<thead>
+<tr>
+<th>base参数</th>
+<th>expert数量(等价dense参数量)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10M</td>
+<td>8(23.88M), 16(33.89M), 32(48.12M), 64(67.24M), 128(90.77M)</td>
+</tr>
+<tr>
+<td>50M</td>
+<td>8(105.73M), 16(142.87M), 32(193.16M), 64(257.59M), 128(333.41M)</td>
+</tr>
+<tr>
+<td>100M</td>
+<td>8(200.66M), 16(265.50M), 32(351.46M), 64(459.33M), 128(583.90M)</td>
+</tr>
+<tr>
+<td>300M</td>
+<td>8(554.00M), 16(708.92M), 32(907.58M), 64(1.15B), 128(1.42B)</td>
+</tr>
+<tr>
+<td>500M</td>
+<td>8(888.35M), 16(1.12B), 32(1.41B), 64(1.76B), 128(2.14B)</td>
+</tr>
+<tr>
+<td>800M</td>
+<td>8(1.37B), 16(1.70B), 32(2.12B), 64(2.60B), 128(3.14B)</td>
+</tr>
+<tr>
+<td>1B</td>
+<td>8(1.69B), 16(2.08B), 32(2.57B), 64(3.14B), 128(3.76B)</td>
+</tr>
+<tr>
+<td>3B</td>
+<td>8(4.65B), 16(5.55B), 32(6.63B), 64(7.85B), 128(9.13B)</td>
+</tr>
+<tr>
+<td>5B</td>
+<td>8(7.46B), 16(8.77B), 32(10.30B), 64(12.02B), 128(13.80B)</td>
+</tr>
+<tr>
+<td>7B</td>
+<td>8(10.19B), 16(11.85B), 32(13.78B), 64(15.91B), 128(18.11B)</td>
+</tr>
+<tr>
+<td>13B</td>
+<td>8(18.05B), 16(20.60B), 32(23.51B), 64(26.68B), 128(29.87B)</td>
+</tr>
+<tr>
+<td>70B</td>
+<td>8(85.59B), 16(92.80B), 32(100.62B), 64(108.71B), 128(116.51B)</td>
+</tr>
+<tr>
+<td>130B</td>
+<td>8(151.69B), 16(161.39B), 32(171.74B), 64(182.23B), 128(192.18B)</td>
+</tr>
+<tr>
+<td>200B</td>
+<td>8(225.88B), 16(237.21B), 32(249.12B), 64(261.05B), 128(272.23B)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>[!important]</p>
+<p><em>应当注意，计算过程中使用的是论文中的数据，可作为参考不代表最终效果！</em></p>
+</blockquote>
+<p>最终我们期望得到这样的一组scaling law图表，用来指导后续的结构选型。
+<img loading="lazy" src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9117a4bce3d3488589c7380da05ac0cd~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=2212&amp;h=982&amp;s=345589&amp;e=png&amp;b=fdfdfd" alt="image.png"  />
+</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2024 <a href="http://localhost:1313/">DawsonChen&#39;s Blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>MoE to Dense介绍以及相关论文速览1111 | DawsonChen&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="背景 MoE模型可以在推理算力不变的情况下，继续扩大模型的规模，从而获得到scaling up带来提升。但是在实际应用场景下，这种提升并非没有代价。
+模型的推理性能；
+因为MoE训练带来显著的通讯量提升，并且在越大规模上面这种提升越巨大，所以MoE的训练性能相比于同样激活参数量的Dense网络只有50%~80%。但当模型处于真实应用场景下，相比与训练性能，我们更关心的是MoE模型的推理性能，MoE模型的推理性能严重依赖于设备之间的通讯带宽，因此会给部署带来额外的成本。
+端侧应用的限制；
+MoE模型虽然激活参数较少，但是模型的总参数量会增大数倍，这在端侧这种内存受限的场景下应用起来并不容易。虽然，在服务端应用的时候可以通过EP这种方式极大的降低总参数量带来的影响。
+因此MoE to Dense的技术可以使MoE模型能够克服上面2个缺点（当然了，因为已经变成一个彻底的Dense模型）。并且，考虑到MoE模型expert之间存在极大的冗余性，缩小MoE总参数量就看起来是非常合理的一种需求了。
+2篇相关论文 One Student Knows All Experts Know: From Sparse to Dense National University of Singapore, Huawei, Oct 2022
+总结：
+应该是第一篇提出将MoE能力压缩到Dense中，看得出来Huawei在发展MoE技术上还是走到前面的。同时结合手机业务的应用场景（背景中说的第2点），提出了MoE to Dense的技术。
+文章提出了一项任务knowledge gather，就是将多个expert中的知识合并到单个expert中，以训练出与 MoE 模型效果类似的稠密学生模型。该任务分为知识收集和知识蒸馏两个阶段，知识收集中探索了四种不同的知识收集方法，知识蒸馏则利用整合好的知识进一步优化学生模型。在实验中，该方法在计算机视觉和自然语言处理两个领域取得了优异的表现。
+知识收集方法分为4种：summation、averaging、Top-K Knowledge Gathering (Top-KG)、Singular Value Decomposition Knowledge Gathering (SVD-KG)。前2个方法类似于模型的参数合并，而后面2种方法是论文中提出的，可以尽可能把重要的参数提取出来。不管用哪种方法，合并都给参数中引入了噪声，因此下一步就是用蒸馏的方式恢复模型的能力。
+论文中的主要创新应该是知识收集的方式，那么最终要的应该是验证知识收集的能力，但可惜的是给出的结果并没有充分的验证。MoE to Dense应用很重要的一点是花尽量少的代价将MoE的能力迁移到Dense模型上面，论文中并没有说明第二阶段蒸馏用的计算量，而是从蒸馏后最终效果和传统的蒸馏方法进行对比。
+Experts Weights Averaging: A New General Training Scheme for Vision Transformers Aug 2023, Fudan University
+re-parameterization，即二次参数化方法，是在CV中提出的一种方法，旨在解决多分支类型的网络结构在推理时的低效，比如 ResNet。具有代表性的是RepVGG，在训练的时候使用多分支结构，但是在推理阶段使用卷积核合并得到一个单分支的网络。该方法最重要的是合并后的结构等价性，而MoE的expert并不存在等价的合并方式。
+因此，论文为了解决这个问题，在每次训练后人为的将expert之间的参数距离拉近。方法如下：
+这里的做法可能有一点隐患，因为MoE的训练过程是会导致expert之间的差异越来越大，如果训练中人为对expert之间参数进行了平滑，那么是否同时也降低了MoE能取得的效果呢？
+在训练结束后，通过平均每个 MoE 的专家，将每个 MoE 转换为 FFN，将模型转换回原始 ViT 以进行推理。论文还提供了理论分析，证明了该方法的有效性和通用性，并在各种 2D 和 3D 视觉任务、ViT 架构和数据集上进行了广泛实验。">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/moe-to-dense-introduce-copy/">
+<meta name="google-site-verification" content="XYZabc">
+<meta name="yandex-verification" content="XYZabc">
+<meta name="msvalidate.01" content="XYZabc">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/moe-to-dense-introduce-copy/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.css"
+    integrity="sha384-bYdxxUwYipFNohQlHt0bjN/LCpueqWz13HufFEV1SUatKs1cm4L6fFgCi1jT643X" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.js"
+    integrity="sha384-Qsn9KnoKISj6dI8g7p1HBlNpVx0I8p1SvlwOldgi3IorMle61nQy4zEahWYtljaz"
+    crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/contrib/auto-render.min.js"
+    integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+    crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+            
+            
+            delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '$', right: '$', display: false },
+                { left: '\\(', right: '\\)', display: false },
+                { left: '\\[', right: '\\]', display: true }
+            ],
+            
+            throwOnError: false
+        });
+    });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+
+const config = {
+    startOnLoad:true,
+    theme: 'forest',
+    themeVariables: {
+        lineColor: "#fafafa"    
+    },
+    flowchart: {
+        useMaxWidth:false,
+        htmlLabels:true
+        }
+};
+mermaid.initialize(config);
+
+
+window.onload = () => {
+    window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="DawsonChen&#39;s Blog (Alt + H)">DawsonChen&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      MoE to Dense介绍以及相关论文速览1111
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h1>
+    <div class="post-meta"><span title='2024-04-22 23:20:46 +0800 CST'>April 22, 2024</span>&nbsp;|&nbsp;<a href="https://github.com/%3cpath_to_repo%3e/content/posts/MoE-to-Dense-introduce%20copy.md" rel="noopener noreferrer" target="_blank">Suggest Changes</a>
+
+</div>
+  </header> 
+  <div class="post-content"><h2 id="背景">背景<a hidden class="anchor" aria-hidden="true" href="#背景">#</a></h2>
+<p>MoE模型可以在推理算力不变的情况下，继续扩大模型的规模，从而获得到scaling up带来提升。但是在实际应用场景下，这种提升并非没有代价。</p>
+<ol>
+<li>
+<p>模型的推理性能；</p>
+<p>因为MoE训练带来显著的通讯量提升，并且在越大规模上面这种提升越巨大，所以MoE的训练性能相比于同样激活参数量的Dense网络只有50%~80%。但当模型处于真实应用场景下，相比与训练性能，我们更关心的是MoE模型的推理性能，MoE模型的推理性能严重依赖于设备之间的通讯带宽，因此会给部署带来额外的成本。</p>
+</li>
+<li>
+<p>端侧应用的限制；</p>
+<p>MoE模型虽然激活参数较少，但是模型的总参数量会增大数倍，这在端侧这种内存受限的场景下应用起来并不容易。虽然，在服务端应用的时候可以通过EP这种方式极大的降低总参数量带来的影响。</p>
+</li>
+</ol>
+<p>因此MoE to Dense的技术可以使MoE模型能够克服上面2个缺点（当然了，因为已经变成一个彻底的Dense模型）。并且，考虑到MoE模型expert之间存在极大的冗余性，缩小MoE总参数量就看起来是非常合理的一种需求了。</p>
+<h2 id="2篇相关论文">2篇相关论文<a hidden class="anchor" aria-hidden="true" href="#2篇相关论文">#</a></h2>
+<h2 id="one-student-knows-all-experts-know-from-sparse-to-dense"><strong>One Student Knows All Experts Know: From Sparse to Dense</strong><a hidden class="anchor" aria-hidden="true" href="#one-student-knows-all-experts-know-from-sparse-to-dense">#</a></h2>
+<p><em>National University of Singapore, Huawei, Oct 2022</em></p>
+<p><strong>总结：</strong></p>
+<blockquote>
+<p>应该是第一篇提出将MoE能力压缩到Dense中，看得出来Huawei在发展MoE技术上还是走到前面的。同时结合手机业务的应用场景（背景中说的第2点），提出了MoE to Dense的技术。</p>
+</blockquote>
+<p><img loading="lazy" src="https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/moe-to-dense1.png" alt="aaa"  />
+</p>
+<p>文章提出了一项任务knowledge gather，就是将多个expert中的知识合并到单个expert中，以训练出与 MoE 模型效果类似的稠密学生模型。该任务分为知识收集和知识蒸馏两个阶段，知识收集中探索了四种不同的知识收集方法，知识蒸馏则利用整合好的知识进一步优化学生模型。在实验中，该方法在计算机视觉和自然语言处理两个领域取得了优异的表现。</p>
+<p>知识收集方法分为4种：summation、averaging、Top-K Knowledge Gathering (Top-KG)、Singular Value Decomposition Knowledge Gathering (SVD-KG)。前2个方法类似于模型的参数合并，而后面2种方法是论文中提出的，可以尽可能把重要的参数提取出来。不管用哪种方法，合并都给参数中引入了噪声，因此下一步就是用蒸馏的方式恢复模型的能力。</p>
+<blockquote>
+<p>论文中的主要创新应该是知识收集的方式，那么最终要的应该是验证知识收集的能力，但可惜的是给出的结果并没有充分的验证。MoE to Dense应用很重要的一点是花尽量少的代价将MoE的能力迁移到Dense模型上面，论文中并没有说明第二阶段蒸馏用的计算量，而是从蒸馏后最终效果和传统的蒸馏方法进行对比。</p>
+</blockquote>
+<h3 id="experts-weights-averaging-a-new-general-training-scheme-for-vision-transformers">Experts Weights Averaging: A New General Training Scheme for Vision Transformers<a hidden class="anchor" aria-hidden="true" href="#experts-weights-averaging-a-new-general-training-scheme-for-vision-transformers">#</a></h3>
+<p><em>Aug 2023, Fudan University</em></p>
+<p>re-parameterization，即二次参数化方法，是在CV中提出的一种方法，旨在解决多分支类型的网络结构在推理时的低效，比如 ResNet。具有代表性的是RepVGG，在训练的时候使用多分支结构，但是在推理阶段使用卷积核合并得到一个单分支的网络。该方法最重要的是合并后的结构等价性，而MoE的expert并不存在等价的合并方式。</p>
+<p>因此，论文为了解决这个问题，在每次训练后人为的将expert之间的参数距离拉近。方法如下：</p>
+<p><img loading="lazy" src="https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/moe-to-dense2.png" alt="aaa"  />
+</p>
+<blockquote>
+<p>这里的做法可能有一点隐患，因为MoE的训练过程是会导致expert之间的差异越来越大，如果训练中人为对expert之间参数进行了平滑，那么是否同时也降低了MoE能取得的效果呢？</p>
+</blockquote>
+<p>在训练结束后，通过平均每个 MoE 的专家，将每个 MoE 转换为 FFN，将模型转换回原始 ViT 以进行推理。论文还提供了理论分析，证明了该方法的有效性和通用性，并在各种 2D 和 3D 视觉任务、ViT 架构和数据集上进行了广泛实验。</p>
+<blockquote>
+<p>这篇文章的出发点是利用MoE结合重参数化提升ViT的效果，同时也降低了MoE模型的部署难度，是一个不错的思路。</p>
+</blockquote>
+<h2 id="后记">后记<a hidden class="anchor" aria-hidden="true" href="#后记">#</a></h2>
+<p>MoE to Dense并不是一个很常见的需求，2篇论文解决的场景都或多或少都有点推理资源敏感。但我觉得随着MoE的模型越来越大，那么对应的推理压力也会越来越大，虽然有专家并行，但实际要实现和同激活参数的Dense模型相同的推理效率并不容易，因此MoE to Dense也会变得越来越有价值。另外MoE中一定存在大量的冗余信息，可以简单说2个现象：1. 增加激活专家并不会带来明显的效果增益；2. 不管用什么方法训练，在推理的时候有些专家被激活的比例任然比较少，因此对MoE做裁剪是必须得一个步骤，而裁剪和转换Dense都需要搞清楚MoE学习到的参数特性。</p>
+<p>这个方向也有很多的挑战，举2个方面：</p>
+<ol>
+<li>目前MoE结构趋向于Deepseek提出的Fine-Grained + shared expert 方式，这又给MoE to Dense的转换增加了难度。因为不光要考虑转换方式有效性，同时还要兼顾模型结构的变换。</li>
+<li>这个事情有一个不在明面上的好处是，通过验证不同的转换方案同时也得到一些MoE技术内在的insight。但是这个事情再深一点就要考虑模型参数的可解释性，这是一个更加困难的领域。</li>
+</ol>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2024 <a href="http://localhost:1313/">DawsonChen&#39;s Blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

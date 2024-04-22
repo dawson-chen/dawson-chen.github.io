@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>PPO实践经验 | DawsonChen&#39;s Blog</title>
+<meta name="keywords" content="">
+<meta name="description" content="PPO的过程就像所有的强化学习一样，从原始的采样分布出发，不断循环3个步骤：采样、奖励、优化（policy gradient）。结合提前训练好的人类偏好模型得到奖励信号，从而实现与人类偏好对齐的目的。
+ppo算法提出是在2017年，应用在语言模型上的相关工作最早发表于2019、2020年（Fine-Tuning Language Models from Human Preferences，Learning to summarize with human feedback），并且后续相关的多个开源代码并未有大改动。然而后来者仍然在使用ppo实现对齐偏好的效果上挣扎，由此可以猜测该技术的应用难度要高于技术难度，而公开的论文中只给出一些实验性质的浅层说明，真正的核心隐藏在只言片语中，需要后来者结合实践慢慢发掘。因此本文尝试将实践中获取到的一些认知记录下来，给后续的技术应用作为参考。
+PPO训练的条件 从ppo的流程来看，一共分为3个阶段：采样、奖励、优化。优化阶段主要是算法的事情，比如说一些trick和参数调整，在个别任务中可能参数调节非常的敏感，但总的来看一个稳定的版本在大多数情况下是够用的。这些trick和参数在开源的工作中都可以见多，基本上都是大同小异。反而是在ppo看来2个固定的环节：采样和奖励，对最终的效果影响最大。采样的模型来自于sft的训练结果，奖励来自于训练好的偏好模型，前者决定了ppo的理论上限，后者决定了ppo的实际训练上限。
+总的来说，想要通过ppo提升模型的能力，需要保证2个条件：
+足够的采样空间； 考虑一个极端的情况，如果每次采样的结果相差都不大，那么很快critic-actor会收敛到稳态（critic预测的value接近真实的q-value，advantage接近于0，actor loss接近于0）； 如果把ppo理解成在sft的采样空间里做熵减，那么采样空间的范围就决定了ppo可以达到的上限； 另外，如果sft的熵足够低，那么意味着采样会非常集中，从效率的角度其实是不利于强化学习训练的，因为agent探索的效率很低，导致模型难以收敛。 在采样空间上保证一定的准确率； ppo根据奖励和KL散度惩罚来调整对应生成字符的概率分布，所以准确率很重要； reward model的泛化性很重要，因为随着ppo的训练，采样分布一直在变； KL惩罚因子一定程度上保证了rm在采样空间上的准确率。 SFT采样空间衡量 因为ppo是从sft开始训练的，并且其过程依赖于采样的多样性，所以衡量采样空间的大小能从感官上预测ppo模型的训练效果。
+实践中可用的指标包括以下5个：
+entropy of next token probability; 下一个字符概率分布的熵 distribution of reward score; 采样分布上奖励值的分布 maximum next token probability; 下一个字符的最大概率值 sampled token probability; 采样token的概率值 number of possible token; 可采样token的数量 正则化reward score
+上图中记录了一次ppo训练过程中的多个reward score分布，几乎看不到有任何的变化。
+因为reward score分布其实是2个变量的叠加分布，即：不同case上得到的reward score的分布 &#43; 同一case上生成不同case的reward分布。我们希望用同一case上生成不同case的reward分布来反应采样空间的大小，所以采用以下正则方法。
+正则方法：reward norm = reward - mean reward from same prompt &#43; global mean reward">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/ppo-practice/">
+<meta name="google-site-verification" content="XYZabc">
+<meta name="yandex-verification" content="XYZabc">
+<meta name="msvalidate.01" content="XYZabc">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/ppo-practice/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.css"
+    integrity="sha384-bYdxxUwYipFNohQlHt0bjN/LCpueqWz13HufFEV1SUatKs1cm4L6fFgCi1jT643X" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/katex.min.js"
+    integrity="sha384-Qsn9KnoKISj6dI8g7p1HBlNpVx0I8p1SvlwOldgi3IorMle61nQy4zEahWYtljaz"
+    crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.2/dist/contrib/auto-render.min.js"
+    integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+    crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+            
+            
+            delimiters: [
+                { left: '$$', right: '$$', display: true },
+                { left: '$', right: '$', display: false },
+                { left: '\\(', right: '\\)', display: false },
+                { left: '\\[', right: '\\]', display: true }
+            ],
+            
+            throwOnError: false
+        });
+    });
+</script>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+
+const config = {
+    startOnLoad:true,
+    theme: 'forest',
+    themeVariables: {
+        lineColor: "#fafafa"    
+    },
+    flowchart: {
+        useMaxWidth:false,
+        htmlLabels:true
+        }
+};
+mermaid.initialize(config);
+
+
+window.onload = () => {
+    window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="DawsonChen&#39;s Blog (Alt + H)">DawsonChen&#39;s Blog</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      PPO实践经验
+      <span class="entry-hint" title="Draft">
+        <svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 -960 960 960" fill="currentColor">
+          <path
+            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
+        </svg>
+      </span>
+    </h1>
+    <div class="post-meta"><span title='2023-11-14 21:41:46 +0800 CST'>November 14, 2023</span>&nbsp;|&nbsp;<a href="https://github.com/%3cpath_to_repo%3e/content/posts/ppo-practice.md" rel="noopener noreferrer" target="_blank">Suggest Changes</a>
+
+</div>
+  </header> 
+  <div class="post-content"><p>PPO的过程就像所有的强化学习一样，从原始的采样分布出发，不断循环3个步骤：采样、奖励、优化（policy gradient）。结合提前训练好的人类偏好模型得到奖励信号，从而实现与人类偏好对齐的目的。</p>
+<p>ppo算法提出是在2017年，应用在语言模型上的相关工作最早发表于2019、2020年（<a href="https://arxiv.org/abs/1909.08593">Fine-Tuning Language Models from Human Preferences</a>，<a href="https://proceedings.neurips.cc/paper/2020/hash/1f89885d556929e98d3ef9b86448f951-Abstract.html">Learning to summarize with human feedback</a>），并且后续相关的多个开源代码并未有大改动。然而后来者仍然在使用ppo实现对齐偏好的效果上挣扎，由此可以猜测该技术的应用难度要高于技术难度，而公开的论文中只给出一些实验性质的浅层说明，真正的核心隐藏在只言片语中，需要后来者结合实践慢慢发掘。因此本文尝试将实践中获取到的一些认知记录下来，给后续的技术应用作为参考。</p>
+<h2 id="ppo训练的条件">PPO训练的条件<a hidden class="anchor" aria-hidden="true" href="#ppo训练的条件">#</a></h2>
+<p>从ppo的流程来看，一共分为3个阶段：采样、奖励、优化。优化阶段主要是算法的事情，比如说一些trick和参数调整，在个别任务中可能参数调节非常的敏感，但总的来看一个稳定的版本在大多数情况下是够用的。这些trick和参数在开源的工作中都可以见多，基本上都是大同小异。反而是在ppo看来2个固定的环节：采样和奖励，对最终的效果影响最大。采样的模型来自于sft的训练结果，奖励来自于训练好的偏好模型，前者决定了ppo的理论上限，后者决定了ppo的实际训练上限。</p>
+<p>总的来说，想要通过ppo提升模型的能力，需要保证2个条件：</p>
+<ol>
+<li>足够的采样空间；
+<ul>
+<li>考虑一个极端的情况，如果每次采样的结果相差都不大，那么很快critic-actor会收敛到稳态（critic预测的value接近真实的q-value，advantage接近于0，actor loss接近于0）；</li>
+<li>如果把ppo理解成在sft的采样空间里做熵减，那么采样空间的范围就决定了ppo可以达到的上限；</li>
+<li>另外，如果sft的熵足够低，那么意味着采样会非常集中，从效率的角度其实是不利于强化学习训练的，因为agent探索的效率很低，导致模型难以收敛。</li>
+</ul>
+</li>
+<li>在采样空间上保证一定的准确率；
+<ul>
+<li>ppo根据奖励和KL散度惩罚来调整对应生成字符的概率分布，所以准确率很重要；</li>
+<li>reward model的泛化性很重要，因为随着ppo的训练，采样分布一直在变；</li>
+<li>KL惩罚因子一定程度上保证了rm在采样空间上的准确率。</li>
+</ul>
+</li>
+</ol>
+<h2 id="sft采样空间衡量">SFT采样空间衡量<a hidden class="anchor" aria-hidden="true" href="#sft采样空间衡量">#</a></h2>
+<p>因为ppo是从sft开始训练的，并且其过程依赖于采样的多样性，所以衡量采样空间的大小能从感官上预测ppo模型的训练效果。</p>
+<p>实践中可用的指标包括以下5个：</p>
+<ul>
+<li>entropy of next token probability;
+下一个字符概率分布的熵</li>
+<li>distribution of reward score;
+采样分布上奖励值的分布</li>
+<li>maximum next token probability;
+下一个字符的最大概率值</li>
+<li>sampled token probability;
+采样token的概率值</li>
+<li>number of possible token;
+可采样token的数量</li>
+</ul>
+<p><strong>正则化reward score</strong></p>
+<!-- raw HTML omitted -->
+<p>上图中记录了一次ppo训练过程中的多个reward score分布，几乎看不到有任何的变化。</p>
+<p>因为reward score分布其实是2个变量的叠加分布，即：不同case上得到的reward score的分布 + 同一case上生成不同case的reward分布。我们希望用同一case上生成不同case的reward分布来反应采样空间的大小，所以采用以下正则方法。</p>
+<p>正则方法：<code>reward norm  = reward - mean reward from same prompt + global mean reward</code></p>
+<p>正则后的reward score分布一定程度上可以反应出模型采样空间大小，且同一case上的reward范围直接影响ppo的学习效果，因此是一个比较重要的指标。</p>
+<h4 id="影响因素">影响因素<a hidden class="anchor" aria-hidden="true" href="#影响因素">#</a></h4>
+<p><strong>生成参数</strong></p>
+<p>在ppo采样过程中主要用到的生成参数是temperature、top_k、top_p，整体来说影响不大的是temperature，但是增大到1以上会引起模型性能急剧下降，其余参数top_p, top_k影响比较小。</p>
+<p><strong>不同epoch的sft模型</strong></p>
+<p>在SFT过程中，随着训练epoch的增加，sft的训练数据上的生成概率分布熵会不断的减小，并且不断的接近熵的下限，即 model collapse模式塌陷。</p>
+<p>一般我会用模型生成的答案对应的reward的分布密度图去衡量不同epoch之间的差异，选好sft的epoch是非常重要的一步。因为我们要保证ppo过程中的生成多样性，所以要保证初始化模型在ppo训练数据上的熵足够大。</p>
+<p>下图有一个密度图。</p>
+<p><img loading="lazy" src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/273cad5f816c49429bee67b5dc510a63~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1280&amp;h=635&amp;s=164761&amp;e=png&amp;b=fbf8f7" alt="image.png"  />
+</p>
+<p>当然，sft的熵降低的程度也取决于训练数据的分布。</p>
+<h2 id="rm准确率">RM准确率<a hidden class="anchor" aria-hidden="true" href="#rm准确率">#</a></h2>
+<p>reward model的准确率，指的是rm打分的偏序关系和人工标注相同的概率。因为ppo依赖于正确的reward奖励进行训练，所以rm在ppo训练过程中的准确率决定了其在人工标注上提升的上限。</p>
+<p>从实践出发，一方面要在不同版本的sft采样空间上保持高准确率；另一方面在ppo训练过程中保持准确率。前者在sft上不断采样，并且通过rm的自测，应该是可以保证的；而后者是比较难实现的，因为rm对ppo采样的数据占比比较少；另外，在ppo训练过程中有没有有效的手段能够检测reward模型的准确率呢？</p>
+<p>一个简单的方法就是尽量多的从ppo模型上采样，并且持续迭代RM的训练数据。ppo的采样至少要提到和sft一样多的比例，这样才能保证训练过程中reward有一个比较稳定的准确率。</p>
+<blockquote>
+<p><em>那么在ppo训练过程中，有没有办法能够检测当前PPO采样空间下rm的准确率呢？</em></p>
+</blockquote>
+<ol>
+<li>
+<p>reward score的分布的方差；</p>
+<p>是ppo-max的论文里首先提出来的。</p>
+</li>
+</ol>
+<p><img loading="lazy" src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e8bc95c315a4444db9a960f0fa592ca2~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1436&amp;h=619&amp;s=101167&amp;e=png&amp;b=ffffff" alt="image.png"  />
+
+在实际中我并没有发现这种大范围的长尾分布，但是确实在一些常见的失效模式上发现了分布方差的变化。下面几个图记录了几组不同的ppo训练过程中，reward 分布的变化。</p>
+<p><img loading="lazy" src="https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/598fe5b6709c470a9a6a54b2559c133e~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1265&amp;h=435&amp;s=207601&amp;e=png&amp;b=fafafa" alt="image.png"  />
+</p>
+<p>这种检验方式不太敏感，只能发现一些比较大的失效模式，比如说rm的漏洞、kl散度过大，对于rm准确率下降无明显反应，如上图左1所示。</p>
+<ol start="2">
+<li>
+<p>GPT4打分；</p>
+<p>因为目前reward model训练数据的打分也来自于gpt4，所以用gpt4去监测reward model在当前ppo采样空间上的偏序关系准确率，也是比较可行的一种方案。</p>
+</li>
+<li>
+<p>标注偏好数据测试集上的logp对比；</p>
+<p>标注过的偏好数据可以和人类偏好对齐，通过logp的对比可以得出choice和reject答案对应的概率，如果choice的概率更高则认为是正确，通过logp可以得到一个准确率。</p>
+</li>
+</ol>
+<h2 id="ppo收益比较小的原因">ppo收益比较小的原因<a hidden class="anchor" aria-hidden="true" href="#ppo收益比较小的原因">#</a></h2>
+<p><strong>原因一：采样空间太小</strong></p>
+<p>ppo如果要提升模型在reward model上的分数，那么依赖于在采样空间内做熵减。但是如果采样空间本来已经很小，那么ppo的上限就被确定了。</p>
+<p>对于一个固定大小的模型，我们观察到的是它是有熵的下限的，也就是不管用sft或者ppo，只要达到了这个下限，就很难去继续做熵减了。这可以解释一种普遍的认知，大量的标注数据+sft可以一定程度代替RLHF。</p>
+<p>单从熵减的角度，目前看来sft和ppo的效果是一样的，也就是说，在<strong>固定的数据范围</strong>内，如果sft已经把熵推到了极限，那么ppo很难在上面做到效果，不管算法细节怎么变。</p>
+<p><strong>原因二：数据集选择</strong></p>
+<p>我认为相对于sft，ppo很重要的一点优势就是可以在更大的范围上优化。因为ppo从采样中学习，即使拿到的sft在某类数据上没有学习的很好，只要它可以在采样中有个别比较好的答案，都可以学习优化。这点虽然sft也可以通过采样数据质检得到，但是效率的上限一定弱于ppo。</p>
+<p>而目前ppo在做数据上关注的是维度对齐，但是我们使用的数据范围仍然在sft的数据范围里面。sft在自己训练数据上采样的平均熵是<strong>0.12</strong>，在ppo的训练数据上采样的平均熵是<strong>0.19</strong>，差距非常小。通过这个数据，可以说明sft在ppo的训练数据上也拟合的很好了。</p>
+<p>也就是说，本来ppo有更快实现泛化的能力。</p>
+<h3 id="如何解决">如何解决<a hidden class="anchor" aria-hidden="true" href="#如何解决">#</a></h3>
+<blockquote>
+<p>我们可以想一个问题：为什么OpenAI和Anthropic可以用ppo去不断迭代模型呢？</p>
+</blockquote>
+<p>最重要的一点，这2个工作中ppo用的指令数据都是来自线上用户，意味着每次新的训练指令中都用之前没有见过的指令（至少在相当长的一段时间，新指令的占比是比较高的）。预训练模型在经过sft后可以解决一个小范围的问题，随着迭代这个范围的圈子不断增加。与sft差别较大的指令数据集上，模型的采样空间会增大，从而保证了ppo继续训练的上限。</p>
+<p>另外，选用ppo迭代侧面说明，ppo有比sft更高的迭代效率。支持这点的要素有：</p>
+<ol>
+<li>RM模型规模更小，意味着RM过拟合的风险低，泛化性更好；</li>
+<li>因为泛化性好，所以有更长的迭代周期；</li>
+<li>众所周知，PPO不需要答案数据进行训练，数据利用率更高；</li>
+</ol>
+<p>总而言之，解决思路就是 先找到ppo可以学习的范围，然后发挥ppo的迭代效率。这里面核心观点是要改变ppo初始化sft的采样空间，以下是几个具体的点：</p>
+<p><strong>数据集</strong></p>
+<p>在sft的基础上要扩大ppo数据范围，对于sft已经拟合比较好的场景，数据需求少一点，其他未拟合场景上需求多一点。这里说的数据范围，包括大的维度，也包括指令格式和内容等。</p>
+<p><strong>初始化sft</strong></p>
+<p>就算是在sft的训练数据上，训练过度也会导致过拟合，降低在训练数据范围上的泛化性，所以ppo选择的sft版本应该应该在一个平衡点上。</p>
+<p>如何选择这个点，可以类比强化学习里的探索和利用，如果ppo学习的范围是不同于sft的，我们希望agent可以更多去探索，选靠前的epoch；反之亦然。</p>
+<h2 id="感想">感想<a hidden class="anchor" aria-hidden="true" href="#感想">#</a></h2>
+<p>PPO算法的作用就是，降低采样分布中低分区域的概率密度，增大高分区域的概率密度，以最大化可以获得的奖励。从这个角度理解，PPO的本质就是在agent的采样空间上面做<strong>熵减</strong>的过程。</p>
+<p>当一项新的技术提出来以后，往往人们对它的效果会过度的预估，而真正在应用过程中一些工程细节往往才是制约它发挥的决定性因素，比如：工程实现、针对业务的调整、甚至高效的分工。但是，我依然认为技术没有好坏，只有合不合适。</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2024 <a href="http://localhost:1313/">DawsonChen&#39;s Blog</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>
