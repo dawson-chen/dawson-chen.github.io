@@ -31,7 +31,7 @@ Scaling laws for neural language models揭示了模型规模、数据大小、�
 
 典型的MoE在transformer结构中应用如下（switch-transformer, Google, Jul 2022）：
 
-![image.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c8a098752565457d997d31558b3f3f06~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1690&h=770&s=175146&e=png&b=fdf9f9)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/c8a098752565457d997d31558b3f3f06%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 **模型结构层面的猜想**
 
@@ -169,7 +169,7 @@ Scaling laws for neural language models揭示了模型规模、数据大小、�
 *   LLaMA 7B -> 13B，上涨19.4%；
 
 
-![image.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f9093af85c8b4b82851c009527dc137e~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1862&h=710&s=68245&e=png&b=fefefe)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/f9093af85c8b4b82851c009527dc137e%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 **结论**：考虑到分数越高越难提升，mixtral的MoE 7Bx8的效果收益可以认为与直接训练13B的模型相仿。
 
@@ -216,11 +216,11 @@ Scaling laws for neural language models揭示了模型规模、数据大小、�
  | ***Oct 2022*** | University of Texas | Residual Mixture of Experts引用：19                                                        | core + residual          | Top2           | MA\>RMoE                |
 
 ## MoE的scaling law：
- ![image.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4a5956df9d9248f38a4e4f42a5e23823~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=2296&h=636&s=324184&e=png&b=fdfdfd)*来自 Deepmind, 2022, Unified Scaling Laws for Routed Language Models*
+ ![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/4a5956df9d9248f38a4e4f42a5e23823%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)*来自 Deepmind, 2022, Unified Scaling Laws for Routed Language Models*
 
 计算公式如下：
 
-![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/2d71aa5de90c48c58561a9d94242b0ad~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=2016&h=274&s=34023&e=png&b=ffffff)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/2d71aa5de90c48c58561a9d94242b0ad%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 需要注意的有以下几点：
 
@@ -236,18 +236,19 @@ Scaling laws for neural language models揭示了模型规模、数据大小、�
   
   mega-blocks对应的方案是S-BASE的方案，效果最好；所以如果只是使用的话注意选择合适的参数；
   
-  ![image.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/45442a85e4c64ef8b5e5d3d921a19349~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1348&h=332&s=44723&e=png&b=ffffff)
+  ![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/45442a85e4c64ef8b5e5d3d921a19349%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
   
   
+
 一个scaling law的使用场景是计算有效参数，能够把MoE的模型参数对应到对应的Dense网络参数，计算方式如下：
 
-![image.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6d687957966e40bc8786dcc36b8c5da8~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=2214&h=248&s=67878&e=png&b=fefefe)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/6d687957966e40bc8786dcc36b8c5da8%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 实测，Mixtral 7bx8对应的有效参数大小是12.2B，与前面从效果和算力层面的推测一致。
 
 ## 难收敛如何解决
 
-![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/afca2a204e8c41ff96433a17e6e8a55e~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1912&h=758&s=179392&e=png&b=fefefe)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/afca2a204e8c41ff96433a17e6e8a55e%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 ***
 
@@ -255,7 +256,7 @@ Scaling laws for neural language models揭示了模型规模、数据大小、�
 
 **解决方法1**：分阶段训练；Evo-MoE
 
-![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/60699f5ffc2d4e2d82ee2cd7f06daa6d~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1762&h=648&s=100340&e=png&b=fefdfd)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/60699f5ffc2d4e2d82ee2cd7f06daa6d%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 a. 首先训练一个正常的网络；b. 通过随机mask将expert分化成不同的expert；c. 加入gating网络，从topk逐渐降低到top1；
 
@@ -269,12 +270,12 @@ a. 首先训练一个正常的网络；b. 通过随机mask将expert分化成不�
 
 gating网络在更新时，输入的logits会增大。因为softmax的导数与输入成正比，所以输入越大会导致梯度越大，容易产生不稳定。
 
-![image.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8099703945c0472d9f3b439d99c55716~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1876&h=664&s=150446&e=png&b=ffffff)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/8099703945c0472d9f3b439d99c55716%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 **解决方法**：加入z-loss，限制输入gating网络的logits的大小。
 
 
-![image.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8514255e98a84142b5a09f970824cfc9~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1924&h=204&s=18924&e=png&b=ffffff)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/8514255e98a84142b5a09f970824cfc9%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 ***
 
@@ -455,3 +456,4 @@ $$
 $$
 
 梯度的前部分确保了表现好的expert能够得到更快的训练。
+

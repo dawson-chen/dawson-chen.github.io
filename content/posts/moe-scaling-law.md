@@ -73,7 +73,7 @@ $$
 
 实验中发现斜率变化与$log\ N$大概成正比，如下图：
 
-![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/82e375f3d4d0464580f46a83fee8cb55~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1538&h=370&s=41068&e=png&b=fefefe)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/82e375f3d4d0464580f46a83fee8cb55%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 
 所以增加一项$log\ N$与$log\ E$的交叉特征，得到公式5。
@@ -102,14 +102,14 @@ $$
 取，画出$E$从1到512过程中$\hat{E}$的变化，可以看到当$E$增大的时候，$\hat{E}$增加变缓 代表了增大expert数量带来的收益逐渐降低。因此，在实际使用MoE时，尽量设置不超过128的expert数量。
 
 
-![image.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f767228a691246a1ba332ed9209b5ff5~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1570&h=658&s=94196&e=png&b=fefefe)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/f767228a691246a1ba332ed9209b5ff5%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 至此，得到最终的scaling law建模，即公式(1)。另外，因为我们的实验以及场景都是在小于128的场景下进行的，所以饱和化带来的收益比较小，**因此，可以沿用论文中的$E_{max}$和$E_{start}$设置，所需需要拟合的参数只有$a,b,c,d$ 这4个**。
 
 论文中最终拟合的参数如下：
 
 
-![image.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d43dfe3a849a4d0e9b0919453cc85b3f~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1556&h=314&s=56976&e=png&b=ffffff)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/d43dfe3a849a4d0e9b0919453cc85b3f%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75-20240424164718056.png)
 
 ## 等价有效参数
 
@@ -169,4 +169,4 @@ def compute_EPC_by_law(N, E):
 > *应当注意，计算过程中使用的是论文中的数据，可作为参考不代表最终效果！*
 
 最终我们期望得到这样的一组scaling law图表，用来指导后续的结构选型。
-![image.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9117a4bce3d3488589c7380da05ac0cd~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=2212&h=982&s=345589&e=png&b=fdfdfd)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/9117a4bce3d3488589c7380da05ac0cd%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)

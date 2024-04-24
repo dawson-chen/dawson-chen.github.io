@@ -53,7 +53,7 @@ math = true
 MRKL System（全名是Modular Reasoning, Knowledge and Language，论文[链接](https://arxiv.org/abs/2205.00445)，博客[链接](https://www.ai21.com/blog/jurassic-x-crossing-the-neuro-symbolic-chasm-with-the-mrkl-system)）由以色列的一家人工智能公司AI21推出，可以被认为是语言模型使用工具系统想法的提出者。虽然在此之前有WebGPT这类教模型使用浏览器的工作，但它是第一个提出将模型作为中枢，接入各种不同类型的插件来完成任务的工作。
 
 
-![image.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/c1c9b7cc490641a2a998832ffd0229ab~tplv-k3u1fbpfcp-watermark.image?)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/c1c9b7cc490641a2a998832ffd0229ab%7Etplv-k3u1fbpfcp-watermark.png)
 
 从工作流程上来看，MRKL已经完全接近于ChatGPT plugin。MRKL认为这是一种跨越神经学派和符号学派的架构（neuro-symbolic architecture），各种插件可以被认为是符号系统，由神经学派的语言模型进行统一调用。
 
@@ -65,14 +65,14 @@ MRKL System（全名是Modular Reasoning, Knowledge and Language，论文[链接
 
 为了教会模型实用工具，一种方法是首先让模型具备推理的能力，从而能够模拟人使用工具的过程。应该说语言模型的训练方式和推理是不沾边的，但是语言模型的美妙之处就在于，当模型大小足够大的时候，它会诞生出很多出乎意料的能力，比方说推理能力。
 
-![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f9802e42df4b47b38052f77048cf4bc6~tplv-k3u1fbpfcp-watermark.image?)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/f9802e42df4b47b38052f77048cf4bc6%7Etplv-k3u1fbpfcp-watermark.png)
 
 
 大语言模型的推理能力通过Chain-of-thought体现出来，但是这种推理能力需要显式的Prompt进行引导。根据引导方式的不同产生出各种不同的技术，其本质上是对不同思维方式的模拟，这里我们只介绍比较典型的ReACT技术。
 
 ReACT用强化学习的方式建模推理的过程，agent认为是一个可以使用各种工具的智能体，environment为所有可用插件构成的工具箱集合，action为可以使用的插件功能集合。而控制策略为语言模型中学习到的知识。一个典型的推理的流程如下图所示：
 
-![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8a73d01fcff34b82a86d03f2b71fb5c8~tplv-k3u1fbpfcp-watermark.image?)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/8a73d01fcff34b82a86d03f2b71fb5c8%7Etplv-k3u1fbpfcp-watermark.png)
 
 
 ReACT推理流程可以分为Thought→Action→Observation→Thought 这样的循环，具体如何实现在本文的后续内容中会进行分析。
@@ -83,7 +83,7 @@ ReACT推理流程可以分为Thought→Action→Observation→Thought 这样的�
 
 注意，模型训练仍然采用典型的文字接龙方式，所以对原本语言模型的能力并没有损失。论文中提出一种利用LLM去自动标注这种数据的方式，和远程监督类似，步骤如下图：
 
-![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/40bb5084a59a43d987bc9cd9d5ec1853~tplv-k3u1fbpfcp-watermark.image?)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/40bb5084a59a43d987bc9cd9d5ec1853%7Etplv-k3u1fbpfcp-watermark.png)
 
 
 ### **工具提出：LangChain**
@@ -104,7 +104,7 @@ ChatGPT plugin是作为一个产品发布的，并且功能还没有完全开放
 
 下面我们分2部分，首先分析LangChain中使用工具的原理；第二部分通过比较2者的区别，得出一些关于ChatGPT plugin原理的猜想。
 
-![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/ece2e5b64a4f40f8a2e4d538f37cdbfe~tplv-k3u1fbpfcp-watermark.image?)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/ece2e5b64a4f40f8a2e4d538f37cdbfe%7Etplv-k3u1fbpfcp-watermark.png)
 
 
 
@@ -148,7 +148,7 @@ response = agent.run("Who is Leo DiCaprio's girlfriend? What is her current age 
 
 介绍完上面的概念，让我们看这个例子是怎么工作的。首先根据提供的工具，agent会生成引导Prompt，对于上面的例子，prompt是下面的样子：
 
-![image.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a1234d5ea48c47838dd4dc8d8477ccca~tplv-k3u1fbpfcp-watermark.image?)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/a1234d5ea48c47838dd4dc8d8477ccca%7Etplv-k3u1fbpfcp-watermark.png)
 
 其中`{input}`为用户Query的占位符号，`{agent_scratchpad}`为模型生成填充的位置。下面说明一个循环Thought→Action→Observation→Thought的详细步骤：
 
@@ -178,7 +178,7 @@ response = agent.run("Who is Leo DiCaprio's girlfriend? What is her current age 
 
 最后，完整的推理过程如下：
 
-![image.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/403cd9564d10443cb850f3ef086a307b~tplv-k3u1fbpfcp-watermark.image?)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/403cd9564d10443cb850f3ef086a307b%7Etplv-k3u1fbpfcp-watermark.png)
 
 ### ChatGPT plugin的原理猜想（未完）
 
