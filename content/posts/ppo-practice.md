@@ -3,6 +3,7 @@ title = 'PPO实践经验'
 date = 2023-11-14T21:41:46+08:00
 draft = false
 math = true
+busuanzi = true
 +++
 
 PPO的过程就像所有的强化学习一样，从原始的采样分布出发，不断循环3个步骤：采样、奖励、优化（policy gradient）。结合提前训练好的人类偏好模型得到奖励信号，从而实现与人类偏好对齐的目的。

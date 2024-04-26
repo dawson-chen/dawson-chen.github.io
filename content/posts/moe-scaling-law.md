@@ -3,6 +3,7 @@ title = 'Moe的Scaling Law'
 date = 2023-12-22T23:39:21+08:00
 draft = false
 math = true
+busuanzi = true
 +++
 
 ## 背景

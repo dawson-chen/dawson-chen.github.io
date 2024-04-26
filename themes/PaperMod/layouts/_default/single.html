@@ -23,8 +23,14 @@
     <div class="post-meta">
       {{- partial "post_meta.html" . -}}
       {{- partial "translation_list.html" . -}}
-      {{- partial "edit_post.html" . -}}
+      <!-- {{- partial "edit_post.html" . -}} -->
       {{- partial "post_canonical.html" . -}}
+      <!-- busuanzi -->
+      {{ if .Site.Params.busuanzi.enable -}}
+      <div  class="meta-item">&nbsp·&nbsp
+        <span id="busuanzi_container_page_pv">Pageviews: <span id="busuanzi_value_page_pv"></span></span>
+      </div>
+      {{- end }}
     </div>
     {{- end }}
   </header>

@@ -2,17 +2,40 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>Posts on DawsonChen&#39;s Blog</title>
-    <link>https://dawson-chen.github.io/posts/</link>
+    <link>http://localhost:1313/posts/</link>
     <description>Recent content in Posts on DawsonChen&#39;s Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 19 Mar 2024 23:40:02 +0800</lastBuildDate>
-    <atom:link href="https://dawson-chen.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Mon, 22 Apr 2024 23:20:46 +0800</lastBuildDate>
+    <atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MoE to Dense介绍以及相关论文速览</title>
+      <link>http://localhost:1313/posts/moe-to-dense-introduce/</link>
+      <pubDate>Mon, 22 Apr 2024 23:20:46 +0800</pubDate>
+      <guid>http://localhost:1313/posts/moe-to-dense-introduce/</guid>
+      <description>背景 MoE模型可以在推理算力不变的情况下，继续扩大模型的规模，从而获得到scaling up带来提升。但是在实际应用场景下，这种提升并非没有代价。
+模型的推理性能；
+因为MoE训练带来显著的通讯量提升，并且在越大规模上面这种提升越巨大，所以MoE的训练性能相比于同样激活参数量的Dense网络只有50%~80%。但当模型处于真实应用场景下，相比与训练性能，我们更关心的是MoE模型的推理性能，MoE模型的推理性能严重依赖于设备之间的通讯带宽，因此会给部署带来额外的成本。
+端侧应用的限制；
+MoE模型虽然激活参数较少，但是模型的总参数量会增大数倍，这在端侧这种内存受限的场景下应用起来并不容易。虽然，在服务端应用的时候可以通过EP这种方式极大的降低总参数量带来的影响。
+因此MoE to Dense的技术可以使MoE模型能够克服上面2个缺点（当然了，因为已经变成一个彻底的Dense模型）。并且，考虑到MoE模型expert之间存在极大的冗余性，缩小MoE总参数量就看起来是非常合理的一种需求了。
+2篇相关论文 One Student Knows All Experts Know: From Sparse to Dense National University of Singapore, Huawei, Oct 2022
+总结：
+应该是第一篇提出将MoE能力压缩到Dense中，看得出来Huawei在发展MoE技术上还是走到前面的。同时结合手机业务的应用场景（背景中说的第2点），提出了MoE to Dense的技术。
+文章提出了一项任务knowledge gather，就是将多个expert中的知识合并到单个expert中，以训练出与 MoE 模型效果类似的稠密学生模型。该任务分为知识收集和知识蒸馏两个阶段，知识收集中探索了四种不同的知识收集方法，知识蒸馏则利用整合好的知识进一步优化学生模型。在实验中，该方法在计算机视觉和自然语言处理两个领域取得了优异的表现。
+知识收集方法分为4种：summation、averaging、Top-K Knowledge Gathering (Top-KG)、Singular Value Decomposition Knowledge Gathering (SVD-KG)。前2个方法类似于模型的参数合并，而后面2种方法是论文中提出的，可以尽可能把重要的参数提取出来。不管用哪种方法，合并都给参数中引入了噪声，因此下一步就是用蒸馏的方式恢复模型的能力。
+论文中的主要创新应该是知识收集的方式，那么最终要的应该是验证知识收集的能力，但可惜的是给出的结果并没有充分的验证。MoE to Dense应用很重要的一点是花尽量少的代价将MoE的能力迁移到Dense模型上面，论文中并没有说明第二阶段蒸馏用的计算量，而是从蒸馏后最终效果和传统的蒸馏方法进行对比。
+Experts Weights Averaging: A New General Training Scheme for Vision Transformers Aug 2023, Fudan University
+re-parameterization，即二次参数化方法，是在CV中提出的一种方法，旨在解决多分支类型的网络结构在推理时的低效，比如 ResNet。具有代表性的是RepVGG，在训练的时候使用多分支结构，但是在推理阶段使用卷积核合并得到一个单分支的网络。该方法最重要的是合并后的结构等价性，而MoE的expert并不存在等价的合并方式。
+因此，论文为了解决这个问题，在每次训练后人为的将expert之间的参数距离拉近。方法如下：
+这里的做法可能有一点隐患，因为MoE的训练过程是会导致expert之间的差异越来越大，如果训练中人为对expert之间参数进行了平滑，那么是否同时也降低了MoE能取得的效果呢？
+在训练结束后，通过平均每个 MoE 的专家，将每个 MoE 转换为 FFN，将模型转换回原始 ViT 以进行推理。论文还提供了理论分析，证明了该方法的有效性和通用性，并在各种 2D 和 3D 视觉任务、ViT 架构和数据集上进行了广泛实验。</description>
+    </item>
     <item>
       <title>Megatron-LM解读：MoE的实现方式</title>
-      <link>https://dawson-chen.github.io/posts/megatron-lm-moe/</link>
+      <link>http://localhost:1313/posts/megatron-lm-moe/</link>
       <pubDate>Tue, 19 Mar 2024 23:40:02 +0800</pubDate>
-      <guid>https://dawson-chen.github.io/posts/megatron-lm-moe/</guid>
+      <guid>http://localhost:1313/posts/megatron-lm-moe/</guid>
       <description>MoE指的是sparse mixture of experts，sparse表示推理的时候不是所有的参数都会被激活。通常情况下MoE被认为是一种scaling up模型的技术，使用同样的资源训练更大的模型，某些设定下其效果甚至可能达到与同样参数量稠密网络相当的水平（Deepseek MoE 2B，见论文）。
 最近社区里有很多MoE的开源工作，xAI发布了300B的MoE模型，苹果发布了MoE的多模态模型。不禁让人想到一个问题，MoE会是AI的未来吗？这是一个很难回答的问题，从我个人的观点出发，在硬件水平不出现巨大飞跃的前提下，答案是肯定的（Quantum come to recue&amp;hellip; i&amp;rsquo;m waiting）。一方面是因为我相信处在最前沿的模型规模还会呈现大幅的提升，需要有技术来弥补硬件水平和扩大后模型规模之间的差距，而MoE是这方面一项成熟同时具有进一步提升潜力的方法。另外一方面，从神经元活动的分布的角度来看，人脑某些区域也是稀疏的，在进化论的角度也可以被看成一种减少能量消耗的方法。再说一下为什么MoE不会是未来，首先在MoE架构理论中有很多的漏洞，比如训练中需要用辅助loss保持exert激活的均匀性，路由训练过程中会震荡。虽然这些问题都有对应的方法去解决，但这种缝缝补补的技术带来收益的同时也限制了收益的上限（MoE的scaling law中可以体现）。
 但这篇博客并不是为了讲MoE技术本身，而是解析一下megatron是如何实现MoE的训练的，以及大规模的MoE模型如何进行并行，同时增加对megatron的了解。
@@ -21,16 +44,16 @@ MoE结构回顾 首先，看一下在最主流的transformer框架里，MoE的�
     </item>
     <item>
       <title>Megatron-LM解读：流水线并行原理和代码解读</title>
-      <link>https://dawson-chen.github.io/posts/megatron-lm-pipline/</link>
+      <link>http://localhost:1313/posts/megatron-lm-pipline/</link>
       <pubDate>Mon, 05 Feb 2024 23:34:01 +0800</pubDate>
-      <guid>https://dawson-chen.github.io/posts/megatron-lm-pipline/</guid>
+      <guid>http://localhost:1313/posts/megatron-lm-pipline/</guid>
       <description>Megatron中包含了大多数目前大模型预训练中所需要的并行技术，并且相较于Deepspeed在硬件层面可以得到更多的优化支持。Megatron的优势体现在其先进的并行化设计上面，而其中流水线并行是非常重要的创新点。相比于tensor并行，流水线并行对通讯的压力更小，使得多机训练超大模型成为可能。而在现代工业生产体系里，流水线早已经是一种耳熟能详的科学管理方式。本文中我们结合工业流水线的视角，分析megatron中流水线的设计与具体实现方式。
 在大模型蓬勃发展的时代，超大模型训练对框架能力的要求越来越高，工作分工也逐渐演变成算法+框架工程师2部分合作的模式。虽然说专业的人干专业的事情，但是算法工程师对框架原理有一定了解依然是必要的。这里有3个我认为重要的理由：
 模型训练中遇到的大多数的问题是算法和工程的混合问题； 算法工程师需要能够独立开发一些小需求； 有助于和框架工程师沟通效率的提升； 认识流水线 除了曾经在流水线上短暂的工作经验之外，我对流水线的认识主要来自于一个汽车工业发展早期的故事。
 1903年的美国底特律，一位出生自普通家庭的汽车工程师亨利福特开始了他的第二次创业。福特拥有多年的汽车设计经验，在上次创业过程中他制造出了性能出众的汽车，虽然通过早期的赛事证明了自己，但最终因为汽车造价太高而导致无法被大众接受，从而导致公司破产。这次福特吸取经验打算将目光瞄向民用市场，制造可以被广大的农场主接受的汽车。
 通过多年快速的技术迭代后，在1908年福特推出了后来鼎鼎大名的T型车，出色的设计以及过硬的质量使得该车很快成为了市场上的抢手货。到了1913年，福特已经是美国最出名的企业家之一，个人财富更是达到了数十亿。此时，可以说是名利双收的福特却开心不起来，一方面T型车的订单已经排到了几个月以后，另一方面工厂的生产效率却一直提不上去。为了实现当初定下的目标，福特目前最关心的只有2件事情，一是继续扩大产能，二是降低汽车的成本。放到今天的工业生产模式下，扩大生产几乎就等于降低产品成本，但在当时的手工作坊装配模式下，扩大生产意味着人才需求的直线上升以及巨大的管理成本，福特知道生产模式的变革已经迫在眉睫。
 1913年福特引入了流水线作为装配生产的形式，从最初的车架被推上流水线，经过各个部件的装配，最终被推下流水线，全流程耗时不过几个小时。效率的提升不光将产能提升数倍，同时汽车的成本下降到原来的一半，也为后来福特推出双休制拉高工人工资奠定了基础。毫无疑问，这是福特汽车发展史上最辉煌的时代。
-为什么一个简单的流水线能够带来这么大的改变，我们分析一下流水线的特点，首先是将原来复杂的工作流程切分成多个小块，每个工人只需要负责其中某个单子的工序，降低了对装配工人技术的依赖；另外，不同于传统的扩大生产需要同时扩大生产设备的模式，流水线并不需要设备的增加，保证了成本降低；最后也是最重要的，流水线子程序划分的越细小，生产效率的提升越高。
+福特公司在使用流水线装配T型汽车的场景 from DALL·E 为什么一个简单的流水线能够带来这么大的改变，我们分析一下流水线的特点，首先是将原来复杂的工作流程切分成多个小块，每个工人只需要负责其中某个单子的工序，降低了对装配工人技术的依赖；另外，不同于传统的扩大生产需要同时扩大生产设备的模式，流水线并不需要设备的增加，保证了成本降低；最后也是最重要的，流水线子程序划分的越细小，生产效率的提升越高。
 为什么要讲这个故事，因为在Megatron中使用的流水线并行的思想与工业生产中的流水线不能说一模一样，只能说是完全一致。对传统流水线有基本的认知可以帮助理解流水线并行，另外哪有那么多创新啊，说白了就是互相借鉴罢了。
 流水线并行设计 流水线并行的英文是Pipline Parallelism，后面简称PP。
 生产生产中的流水线是把一个复杂的过程拆分成多个简单的子过程，每个工人只负责其中的一部分。在模型推理中的PP与传统流水线是完全一致的，大模型被按照层数拆成多个子模型，由单独的GPU设备负责子模型的推理计算，每个节点做的事情就是不断的接收前面节点的输入，然后计算完并将结果传给后面的节点。整个流水线的吞吐量与流水线的细分程度相关，并成线性关系（忽略切分的不均匀度，以及进入时间和流出时间）。
@@ -48,6 +71,191 @@ Interleaved 1F1B 我们在与传统流水线的类比中解释过，流水线切
 节点间通讯 以传统的流水线为例，假设我们需要用代码实现一个多进程的流水线。那么要素一共有3个：
 等待上一个节点的执行结果； 执行当前节点的操作； 将结果传给下一个节点； PP实现的时候，因为每个节点对应了前向后向2条流水线，所以需要4种通讯能力，分别对应了前后2条流水上接受和发送的能力。megatron在实现的时候有一个专门的函数用来实现这种功能，下面是源码：
 def communicate(tensor_send_next, tensor_send_prev, recv_forward, recv_backward): &amp;#34;&amp;#34;&amp;#34;Communicate tensors between stages.&amp;#34;&amp;#34;&amp;#34; args = get_args() # Create placeholder tensors for receive in forward and backward directions # if needed.</description>
+    </item>
+    <item>
+      <title>Batch Size杂谈</title>
+      <link>http://localhost:1313/posts/batch-size/</link>
+      <pubDate>Mon, 22 Jan 2024 23:36:14 +0800</pubDate>
+      <guid>http://localhost:1313/posts/batch-size/</guid>
+      <description>在OpenAI 2018年的一篇论文《An Empirical Model of Large-Batch Training》中就介绍了batch size的选择问题，论文中gradient noise scale作为选择batch size的关键指标。
+简单来说，我们实际中用的SGD产生的loss是真实loss的一种近似，这种近似对应的偏差和我们选择的batch size相关，batch size越大偏差越小。究其本质原因，近似的偏差与批数据的信息有关，当训练loss比较大的时候 可以认为数据中的所有信息都是相关信息，而当loss越来越小，批数据中包含的信息偏差占比会越来越高。
+论文中最大的亮点在于通过严密的推论得出上面的结论，并且推导出固定的模型要达到相同的loss，在不同的batch size下所需训练时长和需要的训练数据量之间的关系，如下所示： $$ (\frac{S}{S_{min}}-1)(\frac{E}{E_{min}}-1)=1 \tag{A1} $$ 其中$E=BS$表示训练使用的数据，通过这个公式，可以得到：
+batch size越大，训练step减小，所需的数据会增加； 训练所需的步数有最小值； 分别解释一下，第一点是因为：当数据中有用信息占比高得时候，小batch size和大batch size得到得梯度方向是差不多的，因此数据的使用率就比较低。第二点，同样是数据的利用效率，如果把batch size很大的情况下，gradient noise已经很小，继续将batch size翻倍得到的收益就很小，所以即使batch size增加到很大，依然需要一定数量的更新步数，也就是$S_{min}$。
+论文中基于gradient noise scale给出一个batch size的经验选择是$B=E_{min}/S_{min}$，在OpenAI Scaling Laws论文中进一步根据经验总结为： $$ B_{crit}\approx \frac{B_}{L^{1/\alpha_B }} \tag{3} $$ 其中，$B_$和$\alpha_B$为经验拟合值，分别约等于$2\times10^8$和$0.21$。
+问题：为什么梯度累积太大会导致loss升高？
+如果batch size远小于$B_{crit}$那么训练的时间会大大增加，但是并不会显著的减小需要的训练量。需要注意的是这里假设了无限的并行条件，当我们在实际中使用梯度累积增大batch size，使得更接近$B_{crit}$​，那么训练总步数会减少，但是总的时间反而会增加。
+下面进行说明，根据公式A1可以得到： $$ E=\frac{E_{min}}{1-\frac{S_{min}}{S}} $$ 意味着，当我通过梯度累积增加batch size，S会减小 但是为了达到同样loss所需的训练数据会增加。而梯度累积并不影响训练速度，过相同的case需要的时间是一样的，也就是需要更多的时间才可以达到同样的loss。
+这个结论也告诉我们，如果只是为了提升训练速度或者提升训练效果，梯度累积并不会有帮助。当然还由其他的影响因素，比如PP并行方式需要大的batch size提升计算效率，或者提升算法训练的稳定性。
+不同batch size下数据的修正 由公式A1得到： $$ D_{min} = \frac{D}{1+\frac{B}{B_{crit}}} $$ 如果2个不同的batch size，达到相同的loss所需数据量的比值为： $$ \frac{D_1}{D_2} = \frac{B_{crit}+B_1}{B_{crit}+B_2} $$ 通过这个修正公式可以看到，如果选择了不正确的batch size，那么会导致实际训练的token的作用并没有最大化。所以，可能会出现实际训练1.</description>
+    </item>
+    <item>
+      <title>Deepspeed-HybridEngine开发指南</title>
+      <link>http://localhost:1313/posts/deepspeed-hybrid-engine-dev/</link>
+      <pubDate>Sun, 07 Jan 2024 12:37:45 +0800</pubDate>
+      <guid>http://localhost:1313/posts/deepspeed-hybrid-engine-dev/</guid>
+      <description>2023-11-29写； 2023-12-06修改：增加适配模型开发流程说明；增加bug解决记录； Deepspeed-Chat是一个优秀且易用的PPO开源实现，实际在使用时HybridEngine开发是PPO工程相关的重要一环，本次分享的目的：
+了解整体Deepspeed的架构，和代码逻辑； 清楚如何在Deepspeed上进行HE适配相关开发； 主要是对新的模型结构的适配； 先回答为什么需要做适配，因为HE(hybrid engine)本身解决的问题是将训练中的zero3模型，转换成更高效的对设备通讯压力不大的推理模式，可以是不带tp的全参数推理，也可以是带tp的推理。所以不管是哪种形式的推理，都需要重构推理图，并且处理好这种模式转换间设计的大量引用，也是适配需要做的全部事情。虽然我相信这个过程一定可以改成完全自动的形式，但是目前还没有找到这种实现方式。
+然后看一下HE的优势是什么，推理速度不用说，就相当于带或不带zero3的差距，通常10x左右。还有一个优势是带TP的HE方式在内存上的优势，这一点在模型比较大且显存压力较大的场景下尤为重要。下面举ppo的例子，如果训练的sft和actor模型大小是70b，reward和critic是7b，一共4个模型，考虑32张A100-80G的场景：
+ZeRO3训练模型占用显存（每张卡）：
+Actor: (优化器12 + 参数2 + 梯度2) * 70 / 32 = 35G SFT：通常offload，显存可以记作0G reward+critic：3.9G 每张卡总共需要：38.9G
+占用的显存是够的，但是zero3推理速度在ppo生成阶段几乎不可用；
+（HE模式）ZeRO3训练模型+TP推理占用显存（每张卡）：
+TP的size设为8
+训练阶段：TP的参数释放掉，和ZeRO3模式一样，38.9G； 生成阶段：70 * 2 = 140G（全部推理参数），TP参数切片140 / 8 = 17.5G，所以一共需要56.4G； 训练用ZeRO3节约显存，生成用HE提升速度。如果不用TP的HE那么140G放到一张卡上，目前还没有设备能支持。
+1. 整体架构 1.1 启动流程 涉及代码都在deepspeed/launcher目录下面，一共2个文件 runner和launcher。
+1.2 Zero3 zero3架构是什么样的，如何实现？
+https://github.com/microsoft/DeepSpeed/blob/2c2a7f31bcc20ae12ce8d2b8af14448939ebdf12/deepspeed/runtime/zero/stage3.py#L120C9-L120C9
+自动对参数进行all_gather，使用后自动释放；实现核心 ZeROOrderedDict
+1.3 Hybrid Engine 为什么需要HE？
+Zero3是用来训练的并行方式，推理的时候有很大劣势，并且不能扩展到多机的情况。
+HE如何起到作用？实现方式？
+HE内容：1. 自定义算子；2. tensor parallelism；
+不带TP的方式； 适用于 7b、13b 单机多卡 带TP的方式； 适用于66b、70b 更大模型的训练 比如说模型ChatGLM2，它的代码实现里transformer块对应的实现类是 GLMBlock，HE就是实现一个新的推理过程，带或者不带TP区别就是这个推理过程是不是分布式，然后替换掉 GLMBlock的forward方法。</description>
+    </item>
+    <item>
+      <title>Moe的Scaling Law</title>
+      <link>http://localhost:1313/posts/moe-scaling-law/</link>
+      <pubDate>Fri, 22 Dec 2023 23:39:21 +0800</pubDate>
+      <guid>http://localhost:1313/posts/moe-scaling-law/</guid>
+      <description>背景 Dense网络的scaling law如下：
+$$ Log\ \mathit{L}(N) \triangleq a\ log \mathit N + d \tag{1} $$
+来自Scaling laws for neural language models
+不同的分词器、模型结构、数据都会影响这2个值，所以需要重新评估。
+MoE的scaling law建模出自论文 Unified Scaling Laws for Routed Language Models, DeepMind, Feb 2022，关键的工作是基于Dense网络的scaling law，并结合MoE的实验特性，设计出新的建模。
+关键假设：MoE模型收敛后（如果没有特殊说明，后续所有的loss都是指收敛后的）的log-loss，是基底参数两log和expert数量log的双线性组合。
+表示公式如下：
+$$ log L(N, E)\triangleq a\ log\ N + b\ log\ \hat{E} + c\ log\ N log \hat{E} + d \tag{2} $$
+$$ where\ \ \ \ \frac{1}{\hat{E}} \triangleq \frac{1}{E-1+(\frac{1}{E_{start}}-\frac{1}{E_{max}})} + \frac{1}{E_{max}} $$
+注意：其中 $log$ 函数使用的基底为10。</description>
+    </item>
+    <item>
+      <title>Moe(Mixtrue of Experts)技术调研</title>
+      <link>http://localhost:1313/posts/moe-introduce/</link>
+      <pubDate>Wed, 20 Dec 2023 23:40:17 +0800</pubDate>
+      <guid>http://localhost:1313/posts/moe-introduce/</guid>
+      <description>陈道一，12/14/2023
+MoE的发明的动机是什么？ MoE提出自hinton 1991年的论文Adaptive mixtures of local experts，主要目的是加快模型训练的速度。因为正常训练过程中，如果使用同一个网络去拟合全部的数据，因为数据是多样性的，所以拟合的过程会比较慢。这时候如果有多个专家网络，每个专家网络只拟合一部分的数据，那么模型整体的学习速度以及泛化的能力都会增强。
+第一次将MoE应用到transformer中的工作是Google 2021年的GShard，并且确定了最近几年MoE工作的主要动机：保持相同训练和推理资源的同时，通过增加模型的体积代价来提升模型学习效果。
+为什么在1991年提出直到最近才重新进入视野？ 1991年还处在BP算法刚刚提出来的阶段，最优的模型也就是多层感知机。当模型本身的容量较低的时候，在复杂的场景下，用一个网络去拟合所有的数据，会因为数据的多样性，所以拟合的过程会比较慢。所以MoE被提出用来增加模型在复杂场景下学习的效果，虽然在LLM时代，只要有足够的算力和数据，模型规模扩大一定能带来更好的效果。但在当时的算力稀缺并且缺少模型scaleup需要的技术时，这种方法还是可以提高参数利用率的。
+而当LLM发展到GPT3的规模，推理和训练对应的优化方法也趋近于完善，继续scale up更多依赖于硬件的提升。那么当算力发展变缓或者获取成本变高的时候，就需要另外一种可以继续scale up但不那么依赖于硬件的方式，MoE开始进入人们的视野。
+MoE为什么会起作用？ scaling law层面的解释
+Scaling laws for neural language models揭示了模型规模、数据大小、以及算力大小之间的规律，并且建议对算力最佳利用方式是：在固定数据集大小下 尽量训练更大规模的模型。这里的规模一般指的是模型参数数量 以及 需要的计算量，参数量增加同时计算量也会增加。
+MoE相当于一次解耦，只增加模型参数数量、同时保持需求计算量相对恒定，所以效果提升符合scaling law的规律。
+典型的MoE在transformer结构中应用如下（switch-transformer, Google, Jul 2022）：
+模型结构层面的猜想
+观察1：FFN可以理解为KV对，K代表了文本模式、V代表了文本分布^[1]^，越靠后的层学习到越复杂的模式。
+观察2：模型越靠后的层学习越不够充分。
+基于这2个观察，可以做出一个假设：学习不充分的原因是容量不够，越靠后的层对容量需求越大。支撑这个假设的一个实验观察是：如果只有一个MoE层，放在越靠后的位置，最终效果越好^[3],[4]^。另外，从直觉上复杂的模式对应的数量是简单模式的指数倍，需要更多的参数去拟合。
+所以MoE通过增加FFN的数量，增加了模型的容量，可以学习到更多的文本模式，所以得到更好的效果。
+[1] Transformer Feed-Forward Layers Are Key-Value Memories [2] Deepspeed-MoE#PR-MoE [3] Hash Layers For Large Sparse Models#Figure 3
+Expert真的是专家吗？ 考虑下面3个MoE路由配置的实验：
+将语义相似的token路由到相同的expert上； 将语义相似的token路由到不同的expert上； 随机将token指定到一个固定的expert上； 如果把expert理解成不同领域的专家，那么应该是1&amp;gt;2&amp;gt;3，但真实的实验结论是2&amp;gt;3&amp;raquo;1（23.22&amp;gt;23.27&amp;raquo;23.99）。
+对此一个合理的解释是：experts并不是理解中的”领域专家“ 分别学习不同的领域知识，而是增加对相似文本模式之间的区分度；相似的文本模式更可能发生在相似的token上面，所以相似的token应该路由到不同的expert上。
+如何计算训练和推理成本？ 结论1：MoE训练所需的显存与基底模型并没有明显差别；
+以Mixtral-7B*8 MoE为例：
+dim n_layers hidden_dim n_heads n_kv_heads vocab_size num_experts_per_tok num_experts 4096 32 14336 32 8 32000 2 8 整体参数量：46b 活跃参数量：12b 对应基底模型参数量：7.</description>
+    </item>
+    <item>
+      <title>PPO实践经验</title>
+      <link>http://localhost:1313/posts/ppo-practice/</link>
+      <pubDate>Tue, 14 Nov 2023 21:41:46 +0800</pubDate>
+      <guid>http://localhost:1313/posts/ppo-practice/</guid>
+      <description>PPO的过程就像所有的强化学习一样，从原始的采样分布出发，不断循环3个步骤：采样、奖励、优化（policy gradient）。结合提前训练好的人类偏好模型得到奖励信号，从而实现与人类偏好对齐的目的。
+ppo算法提出是在2017年，应用在语言模型上的相关工作最早发表于2019、2020年（Fine-Tuning Language Models from Human Preferences，Learning to summarize with human feedback），并且后续相关的多个开源代码并未有大改动。然而后来者仍然在使用ppo实现对齐偏好的效果上挣扎，由此可以猜测该技术的应用难度要高于技术难度，而公开的论文中只给出一些实验性质的浅层说明，真正的核心隐藏在只言片语中，需要后来者结合实践慢慢发掘。因此本文尝试将实践中获取到的一些认知记录下来，给后续的技术应用作为参考。
+PPO训练的条件 从ppo的流程来看，一共分为3个阶段：采样、奖励、优化。优化阶段主要是算法的事情，比如说一些trick和参数调整，在个别任务中可能参数调节非常的敏感，但总的来看一个稳定的版本在大多数情况下是够用的。这些trick和参数在开源的工作中都可以见多，基本上都是大同小异。反而是在ppo看来2个固定的环节：采样和奖励，对最终的效果影响最大。采样的模型来自于sft的训练结果，奖励来自于训练好的偏好模型，前者决定了ppo的理论上限，后者决定了ppo的实际训练上限。
+总的来说，想要通过ppo提升模型的能力，需要保证2个条件：
+足够的采样空间； 考虑一个极端的情况，如果每次采样的结果相差都不大，那么很快critic-actor会收敛到稳态（critic预测的value接近真实的q-value，advantage接近于0，actor loss接近于0）； 如果把ppo理解成在sft的采样空间里做熵减，那么采样空间的范围就决定了ppo可以达到的上限； 另外，如果sft的熵足够低，那么意味着采样会非常集中，从效率的角度其实是不利于强化学习训练的，因为agent探索的效率很低，导致模型难以收敛。 在采样空间上保证一定的准确率； ppo根据奖励和KL散度惩罚来调整对应生成字符的概率分布，所以准确率很重要； reward model的泛化性很重要，因为随着ppo的训练，采样分布一直在变； KL惩罚因子一定程度上保证了rm在采样空间上的准确率。 SFT采样空间衡量 因为ppo是从sft开始训练的，并且其过程依赖于采样的多样性，所以衡量采样空间的大小能从感官上预测ppo模型的训练效果。
+实践中可用的指标包括以下5个：
+entropy of next token probability; 下一个字符概率分布的熵 distribution of reward score; 采样分布上奖励值的分布 maximum next token probability; 下一个字符的最大概率值 sampled token probability; 采样token的概率值 number of possible token; 可采样token的数量 正则化reward score
+上图中记录了一次ppo训练过程中的多个reward score分布，几乎看不到有任何的变化。
+因为reward score分布其实是2个变量的叠加分布，即：不同case上得到的reward score的分布 + 同一case上生成不同case的reward分布。我们希望用同一case上生成不同case的reward分布来反应采样空间的大小，所以采用以下正则方法。
+正则方法：reward norm = reward - mean reward from same prompt + global mean reward</description>
+    </item>
+    <item>
+      <title>Rope背后的数学想象力</title>
+      <link>http://localhost:1313/posts/rope-mechanism/</link>
+      <pubDate>Sun, 06 Aug 2023 23:57:25 +0800</pubDate>
+      <guid>http://localhost:1313/posts/rope-mechanism/</guid>
+      <description>Polya said it well: “When you have satisfied yourself that the theorem is true, you start proving it.”
+开头的话意思是，“当你坚信一个理论是正确的时候，再开始尝试证明它“。这句话里隐藏了一个很重要的观点，数学理论在很多时候的作用是去证明你已有的想法，而不是通过理论推导获取到新的想法。
+今天我们要说的旋转位置编码（RoPE, Rotary Position Embedding），以及它的前导工作复数位置编码（Complex Position Embedding），或许就是这种观点的2个实践例子。如果你首先看到的是它们发表出来的数学公式，你可能会没有耐心看完，所幸它们的代码实现并不难，就算弄清楚它们的原理对实际使用并没有什么帮助。但可惜的是，你也会失去了2次为精妙的idea拍手称赞的机会。
+RoPE包括复数位置编码，这2者背后的想法都是非常简单且直观的，但是它们相关的理论推导又是平凡且枯燥的。这也正是数学的奇妙之处，论抽象，没有什么事物能比得过它。但学习数学的精髓，就是掌握它的这种抽象，如果数学只是死记硬背的公式，不好意思，它并不是什么神秘的咒语，不会给你带来一丝丝魔力。所以我们今天用简单的语言说明一下它们背后的观点。
+什么是复数 因为这2个工作都是建立在复数理论之上，所以我们要耐着性子看一下复数的本质。还好，虽然复数的名字是“复杂的数（Complex number）”，但它的本质是将事情变得简单，不得不说是一次起名上的重大失误。
+在有理数还只有正数的年代（1700s），人们并不会理解负数有什么实际意义。今天人们对复数也有着同样的误会，它的本质是旋转。试想有一个有理数的数轴上，1乘以-1表示在数轴上逆时针翻转180°，那么有没有一个数能让$1\times x \times x=-1$，即施加2次使得1进行翻转呢，那就是逆时针翻转90°，这就是$i$的直观理解。
+顺着这个想法，正常的指数增长是指固定增长率下的持续增长，那么复指数表示固定速率下的持续旋转。欧拉公式$e^{i\pi}=-1$表示将一个数持续旋转弧度$\pi$的情况下，它将指向相反的方向。
+在物理中复指数还用来表示正弦信号，因为正弦信号的来源也是旋转运动。
+复数位置编码 不同于RNN、CNN等模型，对于Transformer模型来说，位置编码的加入是必不可少的，因为纯粹的Attention模块是无法捕捉输入顺序的，即无法区分不同位置的Token。为此我们大体有两个选择：1、想办法将位置信息融入到输入中，这构成了绝对位置编码的一般做法；2、想办法微调一下Attention结构，使得它有能力分辨不同位置的Token，这构成了相对位置编码的一般做法。
+来自 让研究人员绞尽脑汁的Transformer位置编码 - 科学空间|Scientific Spaces (kexue.fm)
+以上内容概括了位置编码的作用，以及2大类：绝对位置编码、相对位置编码。但是总体来说都是在一个框架里，即将绝对位置或者相对位置当做一个token，对应1个固定的多维向量，即位置编码。
+复数位置编码使用了一种巧妙的视角将文字编码和位置编码融为一体，即将文字向量的每一个维度看成1个正弦信号，所以每个文字的embedding就是由N个幅度、初始相位、频率各不相同的信号组成，信号的横轴就是文字所处的位置编号。虽然单一的正弦信号是有周期的，但是N个正弦信号的组合可以使公共周期变得非常大，也就是这种信号可以表示非常长的距离信息。
+用信号集合表示位置编码还有2个显而易见的好处：
+位置无关的平移特性：任意2个位置之间的转换，即每个信号以各自的速率转动相同的时间，这个转换本身与文字当前所处的位置无关； 有界性：正弦信号是上下界的，这点对网络的训练稳定至关重要。 需要说明的是，把信号当做复数位置编码的背后逻辑是我个人的理解，原论文中只有数据理论与证明。
+旋转位置编码 “两个二维向量的内积，等于把它们当复数看时，一个复数与另一个复数的共轭的乘积实部。”
+来自 让研究人员绞尽脑汁的Transformer位置编码 - 科学空间|Scientific Spaces (kexue.fm)
+旋转位置编码的理解需要基于一个抽象：如果将二维向量看做复数，那么向量内积相当于一个复数的角度减去另一个复数的角度，并将它们的模相乘。
+上述抽象基于2个事实：
+复数相乘的含义：1. 模相乘；2. 角度相加； 复数的共轭：指模相同，但是角度相反的复数。 这2个向量在Attention计算中分别代表了Q和K，首先在内积之前对这2个向量进行旋转，旋转角度大小与位置成正比关系。那么在做self-attention的时候，基于前面所说的抽象本质，内积的信息里面包含了Q和K的旋转角度之差，这个差是只依赖于位置差的，所以满足位置无关的平移特性。
+那么在多维的情况下，可以把embedding看作多组复数的组合，这种类比依然适用。
+总结 虽然不能说RoPE是从复数位置编码衍生出来的，因为设置更加巧妙更加简洁，但是这种近乎于直觉的想象力+严密的推理 似乎是它们共同的风格。
+数学一定要有直观的意义吗，我认为是的。虽然并不是所有的数学发现都是从实际出发而得来的，但是最终它们一定会用来解决实际的问题。如果没有了这种直观的想象力，那么仅仅从公式推理去做研究，就如同水木失去本源难以发展，又如空中楼阁难以稳固。</description>
+    </item>
+    <item>
+      <title>Deepspeed原理（手写笔记）</title>
+      <link>http://localhost:1313/posts/deepspeed-drafts/</link>
+      <pubDate>Wed, 05 Jul 2023 23:42:36 +0800</pubDate>
+      <guid>http://localhost:1313/posts/deepspeed-drafts/</guid>
+      <description>前言 介绍了一下DeepSpeed的架构，以及部分重点内容的原理。
+其实是看DeepSpeed源码时候随便写的一段笔记，没时间整理并且写的很潦草，所以不太想发，但是框架的代码读起来不容易，里面知识点确实花了一些时间才弄明白。
+另外，也看到DeepSpeed框架在工作中使用越来越多，所以发出来给想要了解DeepSpeed原理的人一个参考，欢迎批评指正，献丑了。
+正文 </description>
+    </item>
+    <item>
+      <title>混合精度训练</title>
+      <link>http://localhost:1313/posts/mixture-training/</link>
+      <pubDate>Wed, 05 Jul 2023 22:05:35 +0800</pubDate>
+      <guid>http://localhost:1313/posts/mixture-training/</guid>
+      <description>神经网络的参数是用浮点精度表示的， 浮点精度的标准是IEEE 754 - Wikipedia，以下是一个FP16数值在内存中存储格式。
+随着神经网络模型规模越来越大，如何减少模型占用的内存并且缩短训练时间成为亟需解决的问题，混合精度训练就是其中之一的解决方案，并且几乎不会影响模型训练的效果。
+混合精度原理 想象一下，如果模型参数+loss+gradient都是用fp16保存的，fp16的最小值是$6.1\times 10^{-5}$，小于最小值的gradient都会变成0，相当于浪费了一次梯度传播。或许小的gradient并没有很重要，但是积累多次就会变得不可忽略。当前大模型普遍较低的学习率也会加剧这个问题的影响。
+因此为了解决这个问题，就需要用更高精度fp32保存一份参数，在正常前向推理和反向传播时都用fp16，计算好得梯度先转换为fp32，再乘以学习率，然后更新到fp32存储得参数上，最终将fp32参数转换成fp16更新模型参数。
+整个流程如下如：
+这种用fp16和fp32共同训练模型得技术就叫做混合精度训练(MP, Mixed-Precision training)，显然MP并不能节省模型加载需要的内存，因为需要多存储一份fp16的参数和梯度，但是用fp16进行模型前向和后向计算，能够减少中间计算值存储需要的内存，这部分内存会随着sequence length和batch size增大而增大，所以只有在这部分中间值占用内存比重较高时才能带来一定的内存节约。
+虽然计算时间的影响不大，但是fp16训练时间的确会大大减少，通常是减少1.5~5.5倍。
+更多资料：
+fastai - Mixed precision training
+Understanding Mixed Precision Training | by Jonathan Davis | Towards Data Science
+Loss Scale 是不是混合精度训练就完全没有梯度损失了呢，并不是，在反向传播过程中其实已经有部分梯度因为精度原因丢失了（因为正常模型梯度都不会太大，所以我们主要考虑下溢出）。那么如何解决这部分问题呢，就要用到Loss Scale。
+原理是将Loss乘以一个比较大的数scale，因为Loss是用fp32存储的，所以scale的选值范围是比较大的。这样因为反向传播链式法则原理，梯度也会放大很多倍，原本下溢出的值也会保存下来。然后在梯度转换成fp32后除以scale，最后更新就与正常混合精度训练一致了。
+流程如下：
+一般在开始训练时scale会设定成一个比较大的值，如果计算过程中fp16梯度发生上溢出，会跳过当前步的参数更新，并将scale下调。训练log中会输出如下消息：
+⚠️ Gradient overflow. Skipping step, loss scaler 0 reducing loss scale to… </description>
+    </item>
+    <item>
+      <title>ChatGPT Plugins原理介绍和讨论</title>
+      <link>http://localhost:1313/posts/chatgpt-plugin/</link>
+      <pubDate>Fri, 07 Apr 2023 20:43:43 +0800</pubDate>
+      <guid>http://localhost:1313/posts/chatgpt-plugin/</guid>
+      <description>背景 让我们回顾以下过去的半个月里重要的AI发展。
+事件 时间 介绍 公司 Visual ChatGPT 3-12 可以通过文本和图片聊天，甚至修改图片内容。 Microsoft GPT4发布 3-13 更大的ChatGPT模型，部分专业能力达到人类水平，可以接收图片输入。 OpenAI 365 Copilot 3-16 智能办公大杀器。 Microsoft 文心一言 3-16 中国版的ChatGPT Baidu ChatGPT plugin 3-23 可以使用工具的ChatGPT OpenAI HuggingGPT 3-30 可以使用HuggingFace中模型能力的ChatGPT Microsoft 很多评价说过去的几周是AI发展的Crazy Week，这种速度疯狂到甚至让人们开始担心AI会影响到社会和人类，并在公开信中呼吁暂停AI的研究。造成这种现象的原因可以理解为，一是基于ChatGPT的成功，二是行业内大量的关注。
+个人认为，这其中ChatGPT plugin可以认为是对行业应用最有影响力的一个技术，也是继ChatGPT发布以来OpenAI发布的最重要的更新，可以简单的理解为OpenAI发布了对应ChatGPT的应用商店。对未来人工智能应用的形态也有一定启发，以前的AI模型的定位更多的是充当的一个单一的智能工具，具体到某个任务上，还需要人工协同才能完成；但是有了plugin这项技术，那么AI模型可以代替之前人工的部分，自主使用工具，从而端到端的完成某一项任务。这也是为什么一些基础的工作岗位很有可能会被新一代AI技术取代。
+在网上已经有很多对ChatGPT plugin如何使用的介绍，但是比较少有对其实现原理进行解析的内容。这篇文章里我们主要分析一下它的原理，以及可能造成的影响。
+必要性 首先说为什么语言模型要使用插件？随着语言模型的规模不断变大，各种涌现能力被相继发现，从而衍生出各种关于模型能力的研究。但谈到语言模型的应用，始终绕不开一个问题，就是模型无法获取外界的信息。也就是，一旦模型训练完成，后续的所有输出都来自于训练数据中学习到的知识。
+大语言模型存在的问题可以总结为以下2点：
+缺少最新数据的补充；
+在不同的应用场景，对数据的需求也是不同的。在开放问答领域，可以是维基百科一类的数据。在特定业务领域，可能是公司内部的一些私人数据集。
+缺少专业的能力；
+大型语言模型对通用逻辑的理解是比较好的，比方说写一篇文章，与人聊天。但是涉及到特殊的专业，比方说作数学题、求公式的解，这类型问题对模型来说是有点难的。
+虽然GPT4号称用了更大的模型，可以在一些专业领域得到类似于人类的效果甚至超越。但是从本质上来看，语言模型所采用的文字接龙训练方式，对于这类问题是非常不友好的。
+或许随着模型变大，训练时间更长可以得到更好的效果，但是花费巨大训练出的GPT3在计算能力上远远达不到1970年代出现的计算器，本身就可以说明大模型技术是不足以解决专业推理问题的。
+了解了以上模型存在的问题，就可以理解教模型使用插件的必要性了。PS：使用插件、使用工具，在不同的地方有不同的说法，但是是一件事情。
+模型使用工具技术发展 在GPT3发布以后，就有一些AI模型使用插件的技术研究陆续出现，甚至有一些开源的框架在github上收获不错的关注。
+想法的提出：MRKL System MRKL System（全名是Modular Reasoning, Knowledge and Language，论文链接，博客链接）由以色列的一家人工智能公司AI21推出，可以被认为是语言模型使用工具系统想法的提出者。虽然在此之前有WebGPT这类教模型使用浏览器的工作，但它是第一个提出将模型作为中枢，接入各种不同类型的插件来完成任务的工作。
+从工作流程上来看，MRKL已经完全接近于ChatGPT plugin。MRKL认为这是一种跨越神经学派和符号学派的架构（neuro-symbolic architecture），各种插件可以被认为是符号系统，由神经学派的语言模型进行统一调用。
+这篇论文中以使用计算器为例子，主要描述了如何将自然语言中的内容转换为API所需要的参数，文中提出语言模型few-shot在复杂的问题上性能有限，所以用Prompt tuning这种轻量化的微调技术提升转换的准确率。Prompt tuning技术是用特定训练好的非自然语言prompt来控制模型在特定任务中的生成表现，对应到MRKL中那就是每一个插件都需要训练一个特定的Prompt，虽然说有一定训练成本，但也算是一种比较好的解决思路。
+可是文中对于最重要的问题：”怎么决定调用插件？“，这块的细节并没有太多的描述，也引出了关于大模型推理技术的发展。
+Reasoning技术：ReACT 为了教会模型实用工具，一种方法是首先让模型具备推理的能力，从而能够模拟人使用工具的过程。应该说语言模型的训练方式和推理是不沾边的，但是语言模型的美妙之处就在于，当模型大小足够大的时候，它会诞生出很多出乎意料的能力，比方说推理能力。
+大语言模型的推理能力通过Chain-of-thought体现出来，但是这种推理能力需要显式的Prompt进行引导。根据引导方式的不同产生出各种不同的技术，其本质上是对不同思维方式的模拟，这里我们只介绍比较典型的ReACT技术。
+ReACT用强化学习的方式建模推理的过程，agent认为是一个可以使用各种工具的智能体，environment为所有可用插件构成的工具箱集合，action为可以使用的插件功能集合。而控制策略为语言模型中学习到的知识。一个典型的推理的流程如下图所示：</description>
     </item>
   </channel>
 </rss>

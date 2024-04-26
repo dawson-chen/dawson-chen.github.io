@@ -3,6 +3,7 @@ title = 'Batch Size杂谈'
 date = 2024-01-22T23:36:14+08:00
 draft = false
 math = true
+busuanzi = true
 +++
 
 在OpenAI 2018年的一篇论文《An Empirical Model of Large-Batch Training》中就介绍了batch size的选择问题，论文中gradient noise scale作为选择batch size的关键指标。

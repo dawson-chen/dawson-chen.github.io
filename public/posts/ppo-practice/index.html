@@ -4,7 +4,7 @@
 <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="robots" content="noindex, nofollow">
+<meta name="robots" content="index, follow">
 <title>PPO实践经验 | DawsonChen&#39;s Blog</title>
 <meta name="keywords" content="">
 <meta name="description" content="PPO的过程就像所有的强化学习一样，从原始的采样分布出发，不断循环3个步骤：采样、奖励、优化（policy gradient）。结合提前训练好的人类偏好模型得到奖励信号，从而实现与人类偏好对齐的目的。
@@ -17,11 +17,12 @@ entropy of next token probability; 下一个字符概率分布的熵 distributio
 上图中记录了一次ppo训练过程中的多个reward score分布，几乎看不到有任何的变化。
 因为reward score分布其实是2个变量的叠加分布，即：不同case上得到的reward score的分布 &#43; 同一case上生成不同case的reward分布。我们希望用同一case上生成不同case的reward分布来反应采样空间的大小，所以采用以下正则方法。
 正则方法：reward norm = reward - mean reward from same prompt &#43; global mean reward">
-<meta name="author" content="">
+<meta name="author" content="Dawson Chen">
 <link rel="canonical" href="http://localhost:1313/posts/ppo-practice/">
 <meta name="google-site-verification" content="XYZabc">
 <meta name="yandex-verification" content="XYZabc">
-<meta name="msvalidate.01" content="XYZabc">
+<meta name="msvalidate.01" content="XYZabc"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  <meta name="referrer" content="no-referrer-when-downgrade">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.b609c58d5c11bb90b1a54e04005d74ad1ddf22165eb79f5533967e57df9c3b50.css" integrity="sha256-tgnFjVwRu5CxpU4EAF10rR3fIhZet59VM5Z&#43;V9&#43;cO1A=" rel="preload stylesheet" as="style">
 <link rel="icon" href="http://localhost:1313/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
@@ -115,6 +116,88 @@ mermaid.initialize(config);
 window.onload = () => {
     window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));
 }
+</script><meta property="og:title" content="PPO实践经验" />
+<meta property="og:description" content="PPO的过程就像所有的强化学习一样，从原始的采样分布出发，不断循环3个步骤：采样、奖励、优化（policy gradient）。结合提前训练好的人类偏好模型得到奖励信号，从而实现与人类偏好对齐的目的。
+ppo算法提出是在2017年，应用在语言模型上的相关工作最早发表于2019、2020年（Fine-Tuning Language Models from Human Preferences，Learning to summarize with human feedback），并且后续相关的多个开源代码并未有大改动。然而后来者仍然在使用ppo实现对齐偏好的效果上挣扎，由此可以猜测该技术的应用难度要高于技术难度，而公开的论文中只给出一些实验性质的浅层说明，真正的核心隐藏在只言片语中，需要后来者结合实践慢慢发掘。因此本文尝试将实践中获取到的一些认知记录下来，给后续的技术应用作为参考。
+PPO训练的条件 从ppo的流程来看，一共分为3个阶段：采样、奖励、优化。优化阶段主要是算法的事情，比如说一些trick和参数调整，在个别任务中可能参数调节非常的敏感，但总的来看一个稳定的版本在大多数情况下是够用的。这些trick和参数在开源的工作中都可以见多，基本上都是大同小异。反而是在ppo看来2个固定的环节：采样和奖励，对最终的效果影响最大。采样的模型来自于sft的训练结果，奖励来自于训练好的偏好模型，前者决定了ppo的理论上限，后者决定了ppo的实际训练上限。
+总的来说，想要通过ppo提升模型的能力，需要保证2个条件：
+足够的采样空间； 考虑一个极端的情况，如果每次采样的结果相差都不大，那么很快critic-actor会收敛到稳态（critic预测的value接近真实的q-value，advantage接近于0，actor loss接近于0）； 如果把ppo理解成在sft的采样空间里做熵减，那么采样空间的范围就决定了ppo可以达到的上限； 另外，如果sft的熵足够低，那么意味着采样会非常集中，从效率的角度其实是不利于强化学习训练的，因为agent探索的效率很低，导致模型难以收敛。 在采样空间上保证一定的准确率； ppo根据奖励和KL散度惩罚来调整对应生成字符的概率分布，所以准确率很重要； reward model的泛化性很重要，因为随着ppo的训练，采样分布一直在变； KL惩罚因子一定程度上保证了rm在采样空间上的准确率。 SFT采样空间衡量 因为ppo是从sft开始训练的，并且其过程依赖于采样的多样性，所以衡量采样空间的大小能从感官上预测ppo模型的训练效果。
+实践中可用的指标包括以下5个：
+entropy of next token probability; 下一个字符概率分布的熵 distribution of reward score; 采样分布上奖励值的分布 maximum next token probability; 下一个字符的最大概率值 sampled token probability; 采样token的概率值 number of possible token; 可采样token的数量 正则化reward score
+上图中记录了一次ppo训练过程中的多个reward score分布，几乎看不到有任何的变化。
+因为reward score分布其实是2个变量的叠加分布，即：不同case上得到的reward score的分布 &#43; 同一case上生成不同case的reward分布。我们希望用同一case上生成不同case的reward分布来反应采样空间的大小，所以采用以下正则方法。
+正则方法：reward norm = reward - mean reward from same prompt &#43; global mean reward" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://localhost:1313/posts/ppo-practice/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-11-14T21:41:46+08:00" />
+<meta property="article:modified_time" content="2023-11-14T21:41:46+08:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="PPO实践经验"/>
+<meta name="twitter:description" content="PPO的过程就像所有的强化学习一样，从原始的采样分布出发，不断循环3个步骤：采样、奖励、优化（policy gradient）。结合提前训练好的人类偏好模型得到奖励信号，从而实现与人类偏好对齐的目的。
+ppo算法提出是在2017年，应用在语言模型上的相关工作最早发表于2019、2020年（Fine-Tuning Language Models from Human Preferences，Learning to summarize with human feedback），并且后续相关的多个开源代码并未有大改动。然而后来者仍然在使用ppo实现对齐偏好的效果上挣扎，由此可以猜测该技术的应用难度要高于技术难度，而公开的论文中只给出一些实验性质的浅层说明，真正的核心隐藏在只言片语中，需要后来者结合实践慢慢发掘。因此本文尝试将实践中获取到的一些认知记录下来，给后续的技术应用作为参考。
+PPO训练的条件 从ppo的流程来看，一共分为3个阶段：采样、奖励、优化。优化阶段主要是算法的事情，比如说一些trick和参数调整，在个别任务中可能参数调节非常的敏感，但总的来看一个稳定的版本在大多数情况下是够用的。这些trick和参数在开源的工作中都可以见多，基本上都是大同小异。反而是在ppo看来2个固定的环节：采样和奖励，对最终的效果影响最大。采样的模型来自于sft的训练结果，奖励来自于训练好的偏好模型，前者决定了ppo的理论上限，后者决定了ppo的实际训练上限。
+总的来说，想要通过ppo提升模型的能力，需要保证2个条件：
+足够的采样空间； 考虑一个极端的情况，如果每次采样的结果相差都不大，那么很快critic-actor会收敛到稳态（critic预测的value接近真实的q-value，advantage接近于0，actor loss接近于0）； 如果把ppo理解成在sft的采样空间里做熵减，那么采样空间的范围就决定了ppo可以达到的上限； 另外，如果sft的熵足够低，那么意味着采样会非常集中，从效率的角度其实是不利于强化学习训练的，因为agent探索的效率很低，导致模型难以收敛。 在采样空间上保证一定的准确率； ppo根据奖励和KL散度惩罚来调整对应生成字符的概率分布，所以准确率很重要； reward model的泛化性很重要，因为随着ppo的训练，采样分布一直在变； KL惩罚因子一定程度上保证了rm在采样空间上的准确率。 SFT采样空间衡量 因为ppo是从sft开始训练的，并且其过程依赖于采样的多样性，所以衡量采样空间的大小能从感官上预测ppo模型的训练效果。
+实践中可用的指标包括以下5个：
+entropy of next token probability; 下一个字符概率分布的熵 distribution of reward score; 采样分布上奖励值的分布 maximum next token probability; 下一个字符的最大概率值 sampled token probability; 采样token的概率值 number of possible token; 可采样token的数量 正则化reward score
+上图中记录了一次ppo训练过程中的多个reward score分布，几乎看不到有任何的变化。
+因为reward score分布其实是2个变量的叠加分布，即：不同case上得到的reward score的分布 &#43; 同一case上生成不同case的reward分布。我们希望用同一case上生成不同case的reward分布来反应采样空间的大小，所以采用以下正则方法。
+正则方法：reward norm = reward - mean reward from same prompt &#43; global mean reward"/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Posts",
+      "item": "http://localhost:1313/posts/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "PPO实践经验",
+      "item": "http://localhost:1313/posts/ppo-practice/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "PPO实践经验",
+  "name": "PPO实践经验",
+  "description": "PPO的过程就像所有的强化学习一样，从原始的采样分布出发，不断循环3个步骤：采样、奖励、优化（policy gradient）。结合提前训练好的人类偏好模型得到奖励信号，从而实现与人类偏好对齐的目的。\nppo算法提出是在2017年，应用在语言模型上的相关工作最早发表于2019、2020年（Fine-Tuning Language Models from Human Preferences，Learning to summarize with human feedback），并且后续相关的多个开源代码并未有大改动。然而后来者仍然在使用ppo实现对齐偏好的效果上挣扎，由此可以猜测该技术的应用难度要高于技术难度，而公开的论文中只给出一些实验性质的浅层说明，真正的核心隐藏在只言片语中，需要后来者结合实践慢慢发掘。因此本文尝试将实践中获取到的一些认知记录下来，给后续的技术应用作为参考。\nPPO训练的条件 从ppo的流程来看，一共分为3个阶段：采样、奖励、优化。优化阶段主要是算法的事情，比如说一些trick和参数调整，在个别任务中可能参数调节非常的敏感，但总的来看一个稳定的版本在大多数情况下是够用的。这些trick和参数在开源的工作中都可以见多，基本上都是大同小异。反而是在ppo看来2个固定的环节：采样和奖励，对最终的效果影响最大。采样的模型来自于sft的训练结果，奖励来自于训练好的偏好模型，前者决定了ppo的理论上限，后者决定了ppo的实际训练上限。\n总的来说，想要通过ppo提升模型的能力，需要保证2个条件：\n足够的采样空间； 考虑一个极端的情况，如果每次采样的结果相差都不大，那么很快critic-actor会收敛到稳态（critic预测的value接近真实的q-value，advantage接近于0，actor loss接近于0）； 如果把ppo理解成在sft的采样空间里做熵减，那么采样空间的范围就决定了ppo可以达到的上限； 另外，如果sft的熵足够低，那么意味着采样会非常集中，从效率的角度其实是不利于强化学习训练的，因为agent探索的效率很低，导致模型难以收敛。 在采样空间上保证一定的准确率； ppo根据奖励和KL散度惩罚来调整对应生成字符的概率分布，所以准确率很重要； reward model的泛化性很重要，因为随着ppo的训练，采样分布一直在变； KL惩罚因子一定程度上保证了rm在采样空间上的准确率。 SFT采样空间衡量 因为ppo是从sft开始训练的，并且其过程依赖于采样的多样性，所以衡量采样空间的大小能从感官上预测ppo模型的训练效果。\n实践中可用的指标包括以下5个：\nentropy of next token probability; 下一个字符概率分布的熵 distribution of reward score; 采样分布上奖励值的分布 maximum next token probability; 下一个字符的最大概率值 sampled token probability; 采样token的概率值 number of possible token; 可采样token的数量 正则化reward score\n上图中记录了一次ppo训练过程中的多个reward score分布，几乎看不到有任何的变化。\n因为reward score分布其实是2个变量的叠加分布，即：不同case上得到的reward score的分布 + 同一case上生成不同case的reward分布。我们希望用同一case上生成不同case的reward分布来反应采样空间的大小，所以采用以下正则方法。\n正则方法：reward norm = reward - mean reward from same prompt + global mean reward",
+  "keywords": [
+    
+  ],
+  "articleBody": "PPO的过程就像所有的强化学习一样，从原始的采样分布出发，不断循环3个步骤：采样、奖励、优化（policy gradient）。结合提前训练好的人类偏好模型得到奖励信号，从而实现与人类偏好对齐的目的。\nppo算法提出是在2017年，应用在语言模型上的相关工作最早发表于2019、2020年（Fine-Tuning Language Models from Human Preferences，Learning to summarize with human feedback），并且后续相关的多个开源代码并未有大改动。然而后来者仍然在使用ppo实现对齐偏好的效果上挣扎，由此可以猜测该技术的应用难度要高于技术难度，而公开的论文中只给出一些实验性质的浅层说明，真正的核心隐藏在只言片语中，需要后来者结合实践慢慢发掘。因此本文尝试将实践中获取到的一些认知记录下来，给后续的技术应用作为参考。\nPPO训练的条件 从ppo的流程来看，一共分为3个阶段：采样、奖励、优化。优化阶段主要是算法的事情，比如说一些trick和参数调整，在个别任务中可能参数调节非常的敏感，但总的来看一个稳定的版本在大多数情况下是够用的。这些trick和参数在开源的工作中都可以见多，基本上都是大同小异。反而是在ppo看来2个固定的环节：采样和奖励，对最终的效果影响最大。采样的模型来自于sft的训练结果，奖励来自于训练好的偏好模型，前者决定了ppo的理论上限，后者决定了ppo的实际训练上限。\n总的来说，想要通过ppo提升模型的能力，需要保证2个条件：\n足够的采样空间； 考虑一个极端的情况，如果每次采样的结果相差都不大，那么很快critic-actor会收敛到稳态（critic预测的value接近真实的q-value，advantage接近于0，actor loss接近于0）； 如果把ppo理解成在sft的采样空间里做熵减，那么采样空间的范围就决定了ppo可以达到的上限； 另外，如果sft的熵足够低，那么意味着采样会非常集中，从效率的角度其实是不利于强化学习训练的，因为agent探索的效率很低，导致模型难以收敛。 在采样空间上保证一定的准确率； ppo根据奖励和KL散度惩罚来调整对应生成字符的概率分布，所以准确率很重要； reward model的泛化性很重要，因为随着ppo的训练，采样分布一直在变； KL惩罚因子一定程度上保证了rm在采样空间上的准确率。 SFT采样空间衡量 因为ppo是从sft开始训练的，并且其过程依赖于采样的多样性，所以衡量采样空间的大小能从感官上预测ppo模型的训练效果。\n实践中可用的指标包括以下5个：\nentropy of next token probability; 下一个字符概率分布的熵 distribution of reward score; 采样分布上奖励值的分布 maximum next token probability; 下一个字符的最大概率值 sampled token probability; 采样token的概率值 number of possible token; 可采样token的数量 正则化reward score\n上图中记录了一次ppo训练过程中的多个reward score分布，几乎看不到有任何的变化。\n因为reward score分布其实是2个变量的叠加分布，即：不同case上得到的reward score的分布 + 同一case上生成不同case的reward分布。我们希望用同一case上生成不同case的reward分布来反应采样空间的大小，所以采用以下正则方法。\n正则方法：reward norm = reward - mean reward from same prompt + global mean reward\n正则后的reward score分布一定程度上可以反应出模型采样空间大小，且同一case上的reward范围直接影响ppo的学习效果，因此是一个比较重要的指标。\n影响因素 生成参数\n在ppo采样过程中主要用到的生成参数是temperature、top_k、top_p，整体来说影响不大的是temperature，但是增大到1以上会引起模型性能急剧下降，其余参数top_p, top_k影响比较小。\n不同epoch的sft模型\n在SFT过程中，随着训练epoch的增加，sft的训练数据上的生成概率分布熵会不断的减小，并且不断的接近熵的下限，即 model collapse模式塌陷。\n一般我会用模型生成的答案对应的reward的分布密度图去衡量不同epoch之间的差异，选好sft的epoch是非常重要的一步。因为我们要保证ppo过程中的生成多样性，所以要保证初始化模型在ppo训练数据上的熵足够大。\n下图有一个密度图。\n当然，sft的熵降低的程度也取决于训练数据的分布。\nRM准确率 reward model的准确率，指的是rm打分的偏序关系和人工标注相同的概率。因为ppo依赖于正确的reward奖励进行训练，所以rm在ppo训练过程中的准确率决定了其在人工标注上提升的上限。\n从实践出发，一方面要在不同版本的sft采样空间上保持高准确率；另一方面在ppo训练过程中保持准确率。前者在sft上不断采样，并且通过rm的自测，应该是可以保证的；而后者是比较难实现的，因为rm对ppo采样的数据占比比较少；另外，在ppo训练过程中有没有有效的手段能够检测reward模型的准确率呢？\n一个简单的方法就是尽量多的从ppo模型上采样，并且持续迭代RM的训练数据。ppo的采样至少要提到和sft一样多的比例，这样才能保证训练过程中reward有一个比较稳定的准确率。\n那么在ppo训练过程中，有没有办法能够检测当前PPO采样空间下rm的准确率呢？\nreward score的分布的方差；\n是ppo-max的论文里首先提出来的。\n在实际中我并没有发现这种大范围的长尾分布，但是确实在一些常见的失效模式上发现了分布方差的变化。下面几个图记录了几组不同的ppo训练过程中，reward 分布的变化。\n这种检验方式不太敏感，只能发现一些比较大的失效模式，比如说rm的漏洞、kl散度过大，对于rm准确率下降无明显反应，如上图左1所示。\nGPT4打分；\n因为目前reward model训练数据的打分也来自于gpt4，所以用gpt4去监测reward model在当前ppo采样空间上的偏序关系准确率，也是比较可行的一种方案。\n标注偏好数据测试集上的logp对比；\n标注过的偏好数据可以和人类偏好对齐，通过logp的对比可以得出choice和reject答案对应的概率，如果choice的概率更高则认为是正确，通过logp可以得到一个准确率。\nppo收益比较小的原因 原因一：采样空间太小\nppo如果要提升模型在reward model上的分数，那么依赖于在采样空间内做熵减。但是如果采样空间本来已经很小，那么ppo的上限就被确定了。\n对于一个固定大小的模型，我们观察到的是它是有熵的下限的，也就是不管用sft或者ppo，只要达到了这个下限，就很难去继续做熵减了。这可以解释一种普遍的认知，大量的标注数据+sft可以一定程度代替RLHF。\n单从熵减的角度，目前看来sft和ppo的效果是一样的，也就是说，在固定的数据范围内，如果sft已经把熵推到了极限，那么ppo很难在上面做到效果，不管算法细节怎么变。\n原因二：数据集选择\n我认为相对于sft，ppo很重要的一点优势就是可以在更大的范围上优化。因为ppo从采样中学习，即使拿到的sft在某类数据上没有学习的很好，只要它可以在采样中有个别比较好的答案，都可以学习优化。这点虽然sft也可以通过采样数据质检得到，但是效率的上限一定弱于ppo。\n而目前ppo在做数据上关注的是维度对齐，但是我们使用的数据范围仍然在sft的数据范围里面。sft在自己训练数据上采样的平均熵是0.12，在ppo的训练数据上采样的平均熵是0.19，差距非常小。通过这个数据，可以说明sft在ppo的训练数据上也拟合的很好了。\n也就是说，本来ppo有更快实现泛化的能力。\n如何解决 我们可以想一个问题：为什么OpenAI和Anthropic可以用ppo去不断迭代模型呢？\n最重要的一点，这2个工作中ppo用的指令数据都是来自线上用户，意味着每次新的训练指令中都用之前没有见过的指令（至少在相当长的一段时间，新指令的占比是比较高的）。预训练模型在经过sft后可以解决一个小范围的问题，随着迭代这个范围的圈子不断增加。与sft差别较大的指令数据集上，模型的采样空间会增大，从而保证了ppo继续训练的上限。\n另外，选用ppo迭代侧面说明，ppo有比sft更高的迭代效率。支持这点的要素有：\nRM模型规模更小，意味着RM过拟合的风险低，泛化性更好； 因为泛化性好，所以有更长的迭代周期； 众所周知，PPO不需要答案数据进行训练，数据利用率更高； 总而言之，解决思路就是 先找到ppo可以学习的范围，然后发挥ppo的迭代效率。这里面核心观点是要改变ppo初始化sft的采样空间，以下是几个具体的点：\n数据集\n在sft的基础上要扩大ppo数据范围，对于sft已经拟合比较好的场景，数据需求少一点，其他未拟合场景上需求多一点。这里说的数据范围，包括大的维度，也包括指令格式和内容等。\n初始化sft\n就算是在sft的训练数据上，训练过度也会导致过拟合，降低在训练数据范围上的泛化性，所以ppo选择的sft版本应该应该在一个平衡点上。\n如何选择这个点，可以类比强化学习里的探索和利用，如果ppo学习的范围是不同于sft的，我们希望agent可以更多去探索，选靠前的epoch；反之亦然。\n感想 PPO算法的作用就是，降低采样分布中低分区域的概率密度，增大高分区域的概率密度，以最大化可以获得的奖励。从这个角度理解，PPO的本质就是在agent的采样空间上面做熵减的过程。\n当一项新的技术提出来以后，往往人们对它的效果会过度的预估，而真正在应用过程中一些工程细节往往才是制约它发挥的决定性因素，比如：工程实现、针对业务的调整、甚至高效的分工。但是，我依然认为技术没有好坏，只有合不合适。\n",
+  "wordCount" : "135",
+  "inLanguage": "en",
+  "datePublished": "2023-11-14T21:41:46+08:00",
+  "dateModified": "2023-11-14T21:41:46+08:00",
+  "author":{
+    "@type": "Person",
+    "name": "Dawson Chen"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://localhost:1313/posts/ppo-practice/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "DawsonChen's Blog",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://localhost:1313/favicon.ico"
+    }
+  }
+}
 </script>
 </head>
 
@@ -158,6 +241,21 @@ window.onload = () => {
             </div>
         </div>
         <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/archives" title="Archive">
+                    <span>Archive</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/search/" title="Search (Alt &#43; /)" accesskey=/>
+                    <span>Search</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
         </ul>
     </nav>
 </header>
@@ -165,20 +263,49 @@ window.onload = () => {
 
 <article class="post-single">
   <header class="post-header">
-    
+    <div class="breadcrumbs"><a href="http://localhost:1313/">Home</a>&nbsp;»&nbsp;<a href="http://localhost:1313/posts/">Posts</a></div>
     <h1 class="post-title entry-hint-parent">
       PPO实践经验
-      <span class="entry-hint" title="Draft">
-        <svg xmlns="http://www.w3.org/2000/svg" height="35" viewBox="0 -960 960 960" fill="currentColor">
-          <path
-            d="M160-410v-60h300v60H160Zm0-165v-60h470v60H160Zm0-165v-60h470v60H160Zm360 580v-123l221-220q9-9 20-13t22-4q12 0 23 4.5t20 13.5l37 37q9 9 13 20t4 22q0 11-4.5 22.5T862.09-380L643-160H520Zm300-263-37-37 37 37ZM580-220h38l121-122-18-19-19-18-122 121v38Zm141-141-19-18 37 37-18-19Z" />
-        </svg>
-      </span>
     </h1>
-    <div class="post-meta"><span title='2023-11-14 21:41:46 +0800 CST'>November 14, 2023</span>&nbsp;|&nbsp;<a href="https://github.com/%3cpath_to_repo%3e/content/posts/ppo-practice.md" rel="noopener noreferrer" target="_blank">Suggest Changes</a>
+    <div class="post-meta"><span title='2023-11-14 21:41:46 +0800 CST'>November 14, 2023</span>&nbsp;·&nbsp;1 min&nbsp;·&nbsp;Dawson Chen
 
+      <div  class="meta-item">&nbsp·&nbsp
+        <span id="busuanzi_container_page_pv">Pageviews: <span id="busuanzi_value_page_pv"></span></span>
+      </div>
+    </div>
+  </header> <div class="toc">
+    <details >
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#ppo%e8%ae%ad%e7%bb%83%e7%9a%84%e6%9d%a1%e4%bb%b6" aria-label="PPO训练的条件">PPO训练的条件</a></li>
+                <li>
+                    <a href="#sft%e9%87%87%e6%a0%b7%e7%a9%ba%e9%97%b4%e8%a1%a1%e9%87%8f" aria-label="SFT采样空间衡量">SFT采样空间衡量</a><ul>
+                        <ul>
+                        
+                <li>
+                    <a href="#%e5%bd%b1%e5%93%8d%e5%9b%a0%e7%b4%a0" aria-label="影响因素">影响因素</a></li></ul>
+                    </ul>
+                </li>
+                <li>
+                    <a href="#rm%e5%87%86%e7%a1%ae%e7%8e%87" aria-label="RM准确率">RM准确率</a></li>
+                <li>
+                    <a href="#ppo%e6%94%b6%e7%9b%8a%e6%af%94%e8%be%83%e5%b0%8f%e7%9a%84%e5%8e%9f%e5%9b%a0" aria-label="ppo收益比较小的原因">ppo收益比较小的原因</a><ul>
+                        
+                <li>
+                    <a href="#%e5%a6%82%e4%bd%95%e8%a7%a3%e5%86%b3" aria-label="如何解决">如何解决</a></li></ul>
+                </li>
+                <li>
+                    <a href="#%e6%84%9f%e6%83%b3" aria-label="感想">感想</a>
+                </li>
+            </ul>
+        </div>
+    </details>
 </div>
-  </header> 
+
   <div class="post-content"><p>PPO的过程就像所有的强化学习一样，从原始的采样分布出发，不断循环3个步骤：采样、奖励、优化（policy gradient）。结合提前训练好的人类偏好模型得到奖励信号，从而实现与人类偏好对齐的目的。</p>
 <p>ppo算法提出是在2017年，应用在语言模型上的相关工作最早发表于2019、2020年（<a href="https://arxiv.org/abs/1909.08593">Fine-Tuning Language Models from Human Preferences</a>，<a href="https://proceedings.neurips.cc/paper/2020/hash/1f89885d556929e98d3ef9b86448f951-Abstract.html">Learning to summarize with human feedback</a>），并且后续相关的多个开源代码并未有大改动。然而后来者仍然在使用ppo实现对齐偏好的效果上挣扎，由此可以猜测该技术的应用难度要高于技术难度，而公开的论文中只给出一些实验性质的浅层说明，真正的核心隐藏在只言片语中，需要后来者结合实践慢慢发掘。因此本文尝试将实践中获取到的一些认知记录下来，给后续的技术应用作为参考。</p>
 <h2 id="ppo训练的条件">PPO训练的条件<a hidden class="anchor" aria-hidden="true" href="#ppo训练的条件">#</a></h2>
@@ -216,7 +343,7 @@ window.onload = () => {
 可采样token的数量</li>
 </ul>
 <p><strong>正则化reward score</strong></p>
-<!-- raw HTML omitted -->
+<img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/383cfe2594cd48a0b583ffc3898e31e8~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=912&h=698&s=66007&e=png&b=ffffff" alt="" style="zoom:30%;">
 <p>上图中记录了一次ppo训练过程中的多个reward score分布，几乎看不到有任何的变化。</p>
 <p>因为reward score分布其实是2个变量的叠加分布，即：不同case上得到的reward score的分布 + 同一case上生成不同case的reward分布。我们希望用同一case上生成不同case的reward分布来反应采样空间的大小，所以采用以下正则方法。</p>
 <p>正则方法：<code>reward norm  = reward - mean reward from same prompt + global mean reward</code></p>
@@ -296,6 +423,87 @@ window.onload = () => {
   <footer class="post-footer">
     <ul class="post-tags">
     </ul>
+<nav class="paginav">
+  <a class="prev" href="http://localhost:1313/posts/moe-introduce/">
+    <span class="title">« Prev</span>
+    <br>
+    <span>Moe(Mixtrue of Experts)技术调研</span>
+  </a>
+  <a class="next" href="http://localhost:1313/posts/rope-mechanism/">
+    <span class="title">Next »</span>
+    <br>
+    <span>Rope背后的数学想象力</span>
+  </a>
+</nav>
+
+
+<ul class="share-buttons">
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share PPO实践经验 on x"
+            href="https://x.com/intent/tweet/?text=PPO%e5%ae%9e%e8%b7%b5%e7%bb%8f%e9%aa%8c&amp;url=http%3a%2f%2flocalhost%3a1313%2fposts%2fppo-practice%2f&amp;hashtags=">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M512 62.554 L 512 449.446 C 512 483.97 483.97 512 449.446 512 L 62.554 512 C 28.03 512 0 483.97 0 449.446 L 0 62.554 C 0 28.03 28.029 0 62.554 0 L 449.446 0 C 483.971 0 512 28.03 512 62.554 Z M 269.951 190.75 L 182.567 75.216 L 56 75.216 L 207.216 272.95 L 63.9 436.783 L 125.266 436.783 L 235.9 310.383 L 332.567 436.783 L 456 436.783 L 298.367 228.367 L 432.367 75.216 L 371.033 75.216 Z M 127.633 110 L 164.101 110 L 383.481 400.065 L 349.5 400.065 Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share PPO实践经验 on linkedin"
+            href="https://www.linkedin.com/shareArticle?mini=true&amp;url=http%3a%2f%2flocalhost%3a1313%2fposts%2fppo-practice%2f&amp;title=PPO%e5%ae%9e%e8%b7%b5%e7%bb%8f%e9%aa%8c&amp;summary=PPO%e5%ae%9e%e8%b7%b5%e7%bb%8f%e9%aa%8c&amp;source=http%3a%2f%2flocalhost%3a1313%2fposts%2fppo-practice%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-288.985,423.278l0,-225.717l-75.04,0l0,225.717l75.04,0Zm270.539,0l0,-129.439c0,-69.333 -37.018,-101.586 -86.381,-101.586c-39.804,0 -57.634,21.891 -67.617,37.266l0,-31.958l-75.021,0c0.995,21.181 0,225.717 0,225.717l75.02,0l0,-126.056c0,-6.748 0.486,-13.492 2.474,-18.315c5.414,-13.475 17.767,-27.434 38.494,-27.434c27.135,0 38.007,20.707 38.007,51.037l0,120.768l75.024,0Zm-307.552,-334.556c-25.674,0 -42.448,16.879 -42.448,39.002c0,21.658 16.264,39.002 41.455,39.002l0.484,0c26.165,0 42.452,-17.344 42.452,-39.002c-0.485,-22.092 -16.241,-38.954 -41.943,-39.002Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share PPO实践经验 on reddit"
+            href="https://reddit.com/submit?url=http%3a%2f%2flocalhost%3a1313%2fposts%2fppo-practice%2f&title=PPO%e5%ae%9e%e8%b7%b5%e7%bb%8f%e9%aa%8c">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-3.446,265.638c0,-22.964 -18.616,-41.58 -41.58,-41.58c-11.211,0 -21.361,4.457 -28.841,11.666c-28.424,-20.508 -67.586,-33.757 -111.204,-35.278l18.941,-89.121l61.884,13.157c0.756,15.734 13.642,28.29 29.56,28.29c16.407,0 29.706,-13.299 29.706,-29.701c0,-16.403 -13.299,-29.702 -29.706,-29.702c-11.666,0 -21.657,6.792 -26.515,16.578l-69.105,-14.69c-1.922,-0.418 -3.939,-0.042 -5.585,1.036c-1.658,1.073 -2.811,2.761 -3.224,4.686l-21.152,99.438c-44.258,1.228 -84.046,14.494 -112.837,35.232c-7.468,-7.164 -17.589,-11.591 -28.757,-11.591c-22.965,0 -41.585,18.616 -41.585,41.58c0,16.896 10.095,31.41 24.568,37.918c-0.639,4.135 -0.99,8.328 -0.99,12.576c0,63.977 74.469,115.836 166.33,115.836c91.861,0 166.334,-51.859 166.334,-115.836c0,-4.218 -0.347,-8.387 -0.977,-12.493c14.564,-6.47 24.735,-21.034 24.735,-38.001Zm-119.474,108.193c-20.27,20.241 -59.115,21.816 -70.534,21.816c-11.428,0 -50.277,-1.575 -70.522,-21.82c-3.007,-3.008 -3.007,-7.882 0,-10.889c3.003,-2.999 7.882,-3.003 10.885,0c12.777,12.781 40.11,17.317 59.637,17.317c19.522,0 46.86,-4.536 59.657,-17.321c3.016,-2.999 7.886,-2.995 10.885,0.008c3.008,3.011 3.003,7.882 -0.008,10.889Zm-5.23,-48.781c-16.373,0 -29.701,-13.324 -29.701,-29.698c0,-16.381 13.328,-29.714 29.701,-29.714c16.378,0 29.706,13.333 29.706,29.714c0,16.374 -13.328,29.698 -29.706,29.698Zm-160.386,-29.702c0,-16.381 13.328,-29.71 29.714,-29.71c16.369,0 29.689,13.329 29.689,29.71c0,16.373 -13.32,29.693 -29.689,29.693c-16.386,0 -29.714,-13.32 -29.714,-29.693Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share PPO实践经验 on facebook"
+            href="https://facebook.com/sharer/sharer.php?u=http%3a%2f%2flocalhost%3a1313%2fposts%2fppo-practice%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-106.468,0l0,-192.915l66.6,0l12.672,-82.621l-79.272,0l0,-53.617c0,-22.603 11.073,-44.636 46.58,-44.636l36.042,0l0,-70.34c0,0 -32.71,-5.582 -63.982,-5.582c-65.288,0 -107.96,39.569 -107.96,111.204l0,62.971l-72.573,0l0,82.621l72.573,0l0,192.915l-191.104,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share PPO实践经验 on whatsapp"
+            href="https://api.whatsapp.com/send?text=PPO%e5%ae%9e%e8%b7%b5%e7%bb%8f%e9%aa%8c%20-%20http%3a%2f%2flocalhost%3a1313%2fposts%2fppo-practice%2f">
+            <svg version="1.1" viewBox="0 0 512 512" xml:space="preserve" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M449.446,0c34.525,0 62.554,28.03 62.554,62.554l0,386.892c0,34.524 -28.03,62.554 -62.554,62.554l-386.892,0c-34.524,0 -62.554,-28.03 -62.554,-62.554l0,-386.892c0,-34.524 28.029,-62.554 62.554,-62.554l386.892,0Zm-58.673,127.703c-33.842,-33.881 -78.847,-52.548 -126.798,-52.568c-98.799,0 -179.21,80.405 -179.249,179.234c-0.013,31.593 8.241,62.428 23.927,89.612l-25.429,92.884l95.021,-24.925c26.181,14.28 55.659,21.807 85.658,21.816l0.074,0c98.789,0 179.206,-80.413 179.247,-179.243c0.018,-47.895 -18.61,-92.93 -52.451,-126.81Zm-126.797,275.782l-0.06,0c-26.734,-0.01 -52.954,-7.193 -75.828,-20.767l-5.441,-3.229l-56.386,14.792l15.05,-54.977l-3.542,-5.637c-14.913,-23.72 -22.791,-51.136 -22.779,-79.287c0.033,-82.142 66.867,-148.971 149.046,-148.971c39.793,0.014 77.199,15.531 105.329,43.692c28.128,28.16 43.609,65.592 43.594,105.4c-0.034,82.149 -66.866,148.983 -148.983,148.984Zm81.721,-111.581c-4.479,-2.242 -26.499,-13.075 -30.604,-14.571c-4.105,-1.495 -7.091,-2.241 -10.077,2.241c-2.986,4.483 -11.569,14.572 -14.182,17.562c-2.612,2.988 -5.225,3.364 -9.703,1.12c-4.479,-2.241 -18.91,-6.97 -36.017,-22.23c-13.314,-11.876 -22.304,-26.542 -24.916,-31.026c-2.612,-4.484 -0.279,-6.908 1.963,-9.14c2.016,-2.007 4.48,-5.232 6.719,-7.847c2.24,-2.615 2.986,-4.484 4.479,-7.472c1.493,-2.99 0.747,-5.604 -0.374,-7.846c-1.119,-2.241 -10.077,-24.288 -13.809,-33.256c-3.635,-8.733 -7.327,-7.55 -10.077,-7.688c-2.609,-0.13 -5.598,-0.158 -8.583,-0.158c-2.986,0 -7.839,1.121 -11.944,5.604c-4.105,4.484 -15.675,15.32 -15.675,37.364c0,22.046 16.048,43.342 18.287,46.332c2.24,2.99 31.582,48.227 76.511,67.627c10.685,4.615 19.028,7.371 25.533,9.434c10.728,3.41 20.492,2.929 28.209,1.775c8.605,-1.285 26.499,-10.833 30.231,-21.295c3.732,-10.464 3.732,-19.431 2.612,-21.298c-1.119,-1.869 -4.105,-2.99 -8.583,-5.232Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share PPO实践经验 on telegram"
+            href="https://telegram.me/share/url?text=PPO%e5%ae%9e%e8%b7%b5%e7%bb%8f%e9%aa%8c&amp;url=http%3a%2f%2flocalhost%3a1313%2fposts%2fppo-practice%2f">
+            <svg version="1.1" xml:space="preserve" viewBox="2 2 28 28" height="30px" width="30px" fill="currentColor">
+                <path
+                    d="M26.49,29.86H5.5a3.37,3.37,0,0,1-2.47-1,3.35,3.35,0,0,1-1-2.47V5.48A3.36,3.36,0,0,1,3,3,3.37,3.37,0,0,1,5.5,2h21A3.38,3.38,0,0,1,29,3a3.36,3.36,0,0,1,1,2.46V26.37a3.35,3.35,0,0,1-1,2.47A3.38,3.38,0,0,1,26.49,29.86Zm-5.38-6.71a.79.79,0,0,0,.85-.66L24.73,9.24a.55.55,0,0,0-.18-.46.62.62,0,0,0-.41-.17q-.08,0-16.53,6.11a.59.59,0,0,0-.41.59.57.57,0,0,0,.43.52l4,1.24,1.61,4.83a.62.62,0,0,0,.63.43.56.56,0,0,0,.4-.17L16.54,20l4.09,3A.9.9,0,0,0,21.11,23.15ZM13.8,20.71l-1.21-4q8.72-5.55,8.78-5.55c.15,0,.23,0,.23.16a.18.18,0,0,1,0,.06s-2.51,2.3-7.52,6.8Z" />
+            </svg>
+        </a>
+    </li>
+    <li>
+        <a target="_blank" rel="noopener noreferrer" aria-label="share PPO实践经验 on ycombinator"
+            href="https://news.ycombinator.com/submitlink?t=PPO%e5%ae%9e%e8%b7%b5%e7%bb%8f%e9%aa%8c&u=http%3a%2f%2flocalhost%3a1313%2fposts%2fppo-practice%2f">
+            <svg version="1.1" xml:space="preserve" width="30px" height="30px" viewBox="0 0 512 512" fill="currentColor"
+                xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape">
+                <path
+                    d="M449.446 0C483.971 0 512 28.03 512 62.554L512 449.446C512 483.97 483.97 512 449.446 512L62.554 512C28.03 512 0 483.97 0 449.446L0 62.554C0 28.03 28.029 0 62.554 0L449.446 0ZM183.8767 87.9921H121.8427L230.6673 292.4508V424.0079H281.3328V292.4508L390.1575 87.9921H328.1233L256 238.2489z" />
+            </svg>
+        </a>
+    </li>
+</ul>
+
   </footer>
 </article>
     </main>
@@ -307,7 +515,16 @@ window.onload = () => {
         <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
         <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
     </span>
-</footer>
+
+        
+    <div class="busuanzi-footer">
+    <span id="busuanzi_container_site_pv">
+        Page Views<span id="busuanzi_value_site_pv"></span>次
+    </span>
+    <span id="busuanzi_container_site_uv">
+        Unique Visitors<span id="busuanzi_value_site_uv"></span>人次
+    </span>
+    </div></footer>
 <a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
         <path d="M12 6H0l6-6z" />
@@ -367,6 +584,53 @@ window.onload = () => {
         }
     })
 
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
 </script>
 </body>
 

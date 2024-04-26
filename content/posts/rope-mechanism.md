@@ -3,6 +3,7 @@ title = 'Rope背后的数学想象力'
 date = 2023-08-06T23:57:25+08:00
 draft = false
 math = true
+busuanzi = true
 +++
 
 > Polya said it well: “When you have satisfied yourself that the theorem is true, you start proving it.”

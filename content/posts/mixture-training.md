@@ -3,6 +3,7 @@ title = '混合精度训练'
 date = 2023-07-05T22:05:35+08:00
 draft = false
 math = true
+busuanzi = true
 +++
 
 神经网络的参数是用浮点精度表示的， 浮点精度的标准是[IEEE 754 - Wikipedia](https://en.wikipedia.org/wiki/IEEE_754)，以下是一个FP16数值在内存中存储格式。
