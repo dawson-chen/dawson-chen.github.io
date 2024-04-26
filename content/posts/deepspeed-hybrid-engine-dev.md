@@ -43,7 +43,7 @@ Deepspeed-Chat是一个优秀且易用的PPO开源实现，实际在使用时Hyb
 涉及代码都在deepspeed/launcher目录下面，一共2个文件 runner和launcher。
 
 
-![image.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/734b04c4a96c410fa9e942080b574297~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1598&h=1068&s=815712&e=png&b=fbfafa)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/734b04c4a96c410fa9e942080b574297%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 ### 1.2 Zero3
 
@@ -73,14 +73,14 @@ Deepspeed-Chat是一个优秀且易用的PPO开源实现，实际在使用时Hyb
     class Bird:
         def move(self,):
             print(f'i\'m flying')
-
+    
     class Pig:
         def move(self,):
             print(f'i\'m walking')
-
+    
     bird = Bird()
     pig = Pig()
-
+    
     pig.move = bird.move
     pig.move()
     ''' output
@@ -96,7 +96,7 @@ Deepspeed-Chat是一个优秀且易用的PPO开源实现，实际在使用时Hyb
 Container、Inference、Module、ops之间的调用关系；
 
 
-![image.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/2fe6046f1bf14d2e9cb26a71ef2a2820~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1562&h=686&s=529564&e=png&b=fafafa)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/2fe6046f1bf14d2e9cb26a71ef2a2820%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 HE运作流程，有2个部分：
 
@@ -107,7 +107,7 @@ HE运作流程，有2个部分：
         policy定义文件：deepspeed/module\_inject/replace\_policy.py
         policy和container对应关系：deepspeed/module\_inject/utils.py
     2.  Container创建过程；    
-        ![image.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/6daedac42b1c4f28b26ca796fd415589~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1352&h=624&s=243160&e=png&b=202020)
+        ![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/6daedac42b1c4f28b26ca796fd415589%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
         1.  Create\_module 创建推理图；新的forward函数
         2.  set\_params\_wo\_copy  container将模型变量赋值给计算图；只给引用 不复制
         3.  forward的替换发生在eval方法里；
@@ -116,7 +116,7 @@ HE运作流程，有2个部分：
         2.  尽量使用ds提前定义的cuda算子；
 2.  generate的过程；
     
-    ![image.png](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/355b14a0493a486098c522d85d597a79~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1544&h=946&s=979702&e=png&b=faf9f9)
+    ![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/355b14a0493a486098c522d85d597a79%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 ## 2. 如何适配新的模型
 
@@ -262,10 +262,10 @@ HE本质上就是用zero3参数收集起来，重新生成一个计算图（cont
         ```python
         生成阶段
         Counter({<ZeroParamStatus.NOT_AVAILABLE: 2>: 423})
-
+        
         训练阶段
         Counter({<ZeroParamStatus.NOT_AVAILABLE: 2>: 338, <ZeroParamStatus.AVAILABLE: 1>: 85})
-
+        
         训练后第一次生成阶段
         Counter({<ZeroParamStatus.NOT_AVAILABLE: 2>: 337, <ZeroParamStatus.AVAILABLE: 1>: 85, <ZeroParamStatus.INFLIGHT: 3>: 1})
         ['transformer.encoder.layers.0.input_layernorm.weight', 'transformer.encoder.layers.0.self_attention.query_key_value.bias', 'transformer.encoder.layers.0.post_attention_layernorm.weight', 
@@ -308,6 +308,7 @@ HE本质上就是用zero3参数收集起来，重新生成一个计算图（cont
     *   [x] kv-cache适配时，遇到present\_key\_value向量无理由自发改变的问题；
 
         
-        ![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1a825d9e1be5458c9ee0d59295d550cc~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1342&h=780&s=330582&e=png&b=1f1f1f)
+        ![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/1a825d9e1be5458c9ee0d59295d550cc%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
         通过改变present\_key\_value内存地址解决；==原因未知，如果有，就是对cuda敬畏之心不够！==
+

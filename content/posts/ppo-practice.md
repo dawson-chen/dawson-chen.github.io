@@ -44,7 +44,7 @@ ppo算法提出是在2017年，应用在语言模型上的相关工作最早发�
 
 **正则化reward score**
 
-<img src="https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/383cfe2594cd48a0b583ffc3898e31e8~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=912&h=698&s=66007&e=png&b=ffffff" alt="" style="zoom:30%;">
+<img src="https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/383cfe2594cd48a0b583ffc3898e31e8%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75-20240424164540441.png" alt="" style="zoom:30%;">
 
 上图中记录了一次ppo训练过程中的多个reward score分布，几乎看不到有任何的变化。
 
@@ -68,7 +68,7 @@ ppo算法提出是在2017年，应用在语言模型上的相关工作最早发�
 
 下图有一个密度图。
 
-![image.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/273cad5f816c49429bee67b5dc510a63~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1280&h=635&s=164761&e=png&b=fbf8f7)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/273cad5f816c49429bee67b5dc510a63%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 当然，sft的熵降低的程度也取决于训练数据的分布。
 
@@ -87,10 +87,10 @@ reward model的准确率，指的是rm打分的偏序关系和人工标注相同
     是ppo-max的论文里首先提出来的。 
     
 
-![image.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e8bc95c315a4444db9a960f0fa592ca2~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1436&h=619&s=101167&e=png&b=ffffff)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/e8bc95c315a4444db9a960f0fa592ca2%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
     在实际中我并没有发现这种大范围的长尾分布，但是确实在一些常见的失效模式上发现了分布方差的变化。下面几个图记录了几组不同的ppo训练过程中，reward 分布的变化。
     
-![image.png](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/598fe5b6709c470a9a6a54b2559c133e~tplv-k3u1fbpfcp-jj-mark:0:0:0:0:q75.image#?w=1265&h=435&s=207601&e=png&b=fafafa)
+![image.png](https://raw.githubusercontent.com/dawson-chen/picgo-repo/master/598fe5b6709c470a9a6a54b2559c133e%7Etplv-k3u1fbpfcp-jj-mark%3A0%3A0%3A0%3A0%3Aq75.png)
 
 这种检验方式不太敏感，只能发现一些比较大的失效模式，比如说rm的漏洞、kl散度过大，对于rm准确率下降无明显反应，如上图左1所示。
 
@@ -149,3 +149,4 @@ ppo如果要提升模型在reward model上的分数，那么依赖于在采样�
 PPO算法的作用就是，降低采样分布中低分区域的概率密度，增大高分区域的概率密度，以最大化可以获得的奖励。从这个角度理解，PPO的本质就是在agent的采样空间上面做**熵减**的过程。
 
 当一项新的技术提出来以后，往往人们对它的效果会过度的预估，而真正在应用过程中一些工程细节往往才是制约它发挥的决定性因素，比如：工程实现、针对业务的调整、甚至高效的分工。但是，我依然认为技术没有好坏，只有合不合适。
+
